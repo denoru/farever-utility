@@ -1,0 +1,6 @@
+-cp src
+# adjust these two to your own checkouts (hlx-core: https://github.com/hlx-framework/hlx-core)
+-cp <hlx-core>/hlx-runtime/src
+-cp <hl-imgui>/src
+-main Main
+-hl out.hl

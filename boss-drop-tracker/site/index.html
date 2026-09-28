@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Farever Boss Drop Tracker</title>
+<style>
+  :root {
+    --bg: #100e0c;
+    --panel: #1a1714;
+    --panel-2: #211d19;
+    --line: #302a23;
+    --text: #ece6da;
+    --muted: #a09786;
+    --gold: #e2b45c;
+    --epic: #a970ff;
+    --legendary: #ffb020;
+    --glider: #4fc3f7;
+    --mount: #7ed957;
+    --ok: #57d98a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #241d14 0%, transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font: 14px/1.45 "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  a { color: var(--gold); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 18px 60px; }
+
+  header.top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px; justify-content: space-between; margin-bottom: 20px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: .5px; }
+  h1 span { color: var(--gold); }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 14px; min-width: 128px;
+  }
+  .stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .stat .v { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .stat .bar { height: 5px; background: #0c0a08; border-radius: 4px; overflow: hidden; margin-top: 7px; }
+  .stat .bar i { display: block; height: 100%; background: linear-gradient(90deg, #8a6a24, var(--gold)); }
+  .stat.mount .v { color: var(--mount); }
+  .stat.glider .v { color: var(--glider); }
+  .stat.weapon .v { color: #e08b5f; }
+  .stat.legendary .v { color: var(--legendary); }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px; margin-bottom: 18px; position: sticky; top: 8px; z-index: 5;
+    backdrop-filter: blur(6px);
+  }
+  .tabs { display: flex; background: #0d0b09; border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+  .tabs button {
+    background: none; border: 0; color: var(--muted); padding: 7px 14px; border-radius: 7px;
+    font: inherit; cursor: pointer;
+  }
+  .tabs button.active { background: var(--panel-2); color: var(--text); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    background: #0d0b09; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .chip.active { color: #12100c; background: var(--gold); border-color: var(--gold); font-weight: 600; }
+  .chip[data-cat="mount"].active { background: var(--mount); border-color: var(--mount); }
+  .chip[data-cat="glider"].active { background: var(--glider); border-color: var(--glider); }
+  .chip[data-cat="legendary"].active { background: var(--legendary); border-color: var(--legendary); }
+  .chip[data-cat="weapon"].active { background: #e08b5f; border-color: #e08b5f; }
+  .search {
+    flex: 1; min-width: 160px; background: #0d0b09; border: 1px solid var(--line);
+    color: var(--text); border-radius: 9px; padding: 8px 12px; font: inherit;
+  }
+  .search:focus { outline: none; border-color: #6a5a37; }
+  .toggle { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; cursor: pointer; user-select: none; }
+  .ghost {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 9px; padding: 8px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .ghost:hover { color: var(--text); border-color: #5a4d38; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; display: flex; flex-direction: column; gap: 9px; position: relative;
+    transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: #4a4133; transform: translateY(-1px); }
+  .card.owned { border-color: #2f6b4b; background: linear-gradient(180deg, #17201b, var(--panel)); }
+  .card .head { display: flex; gap: 11px; align-items: center; }
+  .thumb {
+    width: 58px; height: 58px; border-radius: 9px; background: #0c0a08;
+    border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden;
+    flex: 0 0 auto; font-weight: 700; color: var(--muted); font-size: 20px;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
+  .name { font-weight: 600; font-size: 15px; }
+  .meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+  .badge {
+    font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; font-weight: 700;
+    padding: 2px 7px; border-radius: 5px; border: 1px solid transparent;
+  }
+  .badge[data-cat] { color: var(--muted); border-color: var(--line); background: #191612; }
+  .badge.mount { color: var(--mount); border-color: #2f5c27; background: #14210f; }
+  .badge.glider { color: var(--glider); border-color: #235a70; background: #0d1c22; }
+  .badge.weapon { color: #e08b5f; border-color: #74401f; background: #231409; }
+  .badge.legendary, .badge.max { color: var(--legendary); border-color: #7a5510; background: #241a07; }
+  .badge.rarity-Epic { color: var(--epic); border-color: #4d3a77; background: #171124; }
+  .badge.rarity-Legendary { color: var(--legendary); border-color: #7a5510; background: #241a07; }
+  .badge.rarity-Rare { color: #5aa9ff; border-color: #234a70; background: #0d1622; }
+  .badge.rarity-Uncommon { color: #6fd98a; border-color: #27603a; background: #0e1f14; }
+  .badge.rarity-Common { color: #b9b1a2; border-color: #4a443a; background: #191612; }
+  .chance { color: var(--muted); font-size: 12px; }
+  .sources { color: var(--muted); font-size: 12px; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .sources b { color: #cfc6b4; font-weight: 600; }
+  .own-btn {
+    margin-top: auto; width: 100%; text-align: center; cursor: pointer;
+    background: #0d0b09; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 9px; padding: 8px; font: inherit; font-size: 13px;
+  }
+  .card.owned .own-btn { background: #14301f; border-color: #2f6b4b; color: var(--ok); font-weight: 600; }
+
+  .boss-card { grid-column: span 1; }
+  .boss-card .head { align-items: flex-start; }
+  .boss-card .thumb { width: 66px; height: 66px; }
+  .boss-info { min-width: 0; }
+  .lvl { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .progress { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--muted); }
+  .progress .track { flex: 1; height: 6px; background: #0c0a08; border-radius: 4px; overflow: hidden; }
+  .progress .track i { display: block; height: 100%; background: linear-gradient(90deg, #2f6b4b, var(--ok)); }
+  .drops { display: flex; flex-direction: column; gap: 6px; }
+  .drop-row {
+    display: flex; align-items: center; gap: 9px; background: #14120f;
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; cursor: pointer;
+  }
+  .drop-row:hover { border-color: #4a4133; }
+  .drop-row.owned { background: #14201a; border-color: #2f6b4b; }
+  .drop-row .dthumb {
+    width: 34px; height: 34px; border-radius: 6px; background: #0c0a08; overflow: hidden;
+    display: grid; place-items: center; flex: 0 0 auto;
+  }
+  .drop-row .dthumb img { width: 100%; height: 100%; object-fit: contain; }
+  .drop-row .dname { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .drop-row .dchance { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+  .drop-row .tick { width: 16px; height: 16px; border: 1px solid var(--line); border-radius: 4px; display: grid; place-items: center; font-size: 11px; color: transparent; }
+  .drop-row.owned .tick { background: var(--ok); border-color: var(--ok); color: #0b1a12; }
+
+  .runs { display: flex; gap: 8px; border-top: 1px dashed var(--line); padding-top: 9px; }
+  .run-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .run-field span {
+    font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted);
+  }
+  .run-field input {
+    width: 100%; background: #0d0b09; border: 1px solid var(--line); color: var(--text);
+    border-radius: 8px; padding: 7px 9px; font: inherit; font-size: 14px;
+    -moz-appearance: textfield;
+  }
+  .run-field input::-webkit-outer-spin-button, .run-field input::-webkit-inner-spin-button,
+  .row-count::-webkit-outer-spin-button, .row-count::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  .row-count {
+    width: 48px; -moz-appearance: textfield;
+    background: #0d0b09; border: 1px solid var(--line); color: var(--text);
+    border-radius: 6px; padding: 4px 5px; font: inherit; font-size: 12.5px; text-align: center;
+  }
+  .row-count:focus { outline: none; border-color: #6a5a37; }
+  .drop-row:has(.row-count:focus) { border-color: #6a5a37; }
+  .run-field input:focus { outline: none; border-color: #6a5a37; }
+  .run-rate { font-size: 12px; color: var(--muted); min-height: 16px; }
+
+  .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: center; }
+  .legend-note { color: var(--muted); font-size: 12px; margin: -8px 0 14px; }
+  @media (max-width: 640px) {
+    h1 { font-size: 21px; }
+    .stat { min-width: 104px; padding: 8px 10px; }
+    .toolbar { position: static; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Farever <span>Boss Drop Tracker</span></h1>
+      <div class="sub" id="subtitle">Mounts · Gliders · Legendaries from world &amp; dungeon bosses</div>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabs">
+      <button data-tab="bosses" class="active">By boss</button>
+      <button data-tab="items">Items</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <input class="search" id="search" type="search" placeholder="Search item or boss…">
+    <label class="toggle"><input type="checkbox" id="hideOwned"> Hide owned</label>
+    <button class="ghost" id="reset" title="Clear all ticks">Reset</button>
+  </div>
+
+  <div id="view"></div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script src="data/bosses.js"></script>
+<script>
+(function () {
+  var DATA = window.FAREVER_BOSS_DATA;
+  var STORE = 'fareverBossTracker.v1';
+  var RUNS_STORE = 'fareverBossTracker.runs.v1';
+  var ITEM_STORE = 'fareverBossTracker.itemruns.v1';
+
+  function boot(data) {
+    DATA = data;
+    var owned = load();
+    var runs = loadRuns();
+    var itemRuns = loadItemRuns();
+    var state = { tab: 'bosses', cat: 'all', q: '', hideOwned: false };
+
+    var unique = {};
+    DATA.bosses.forEach(function (b) {
+      b.drops.forEach(function (d) {
+        if (!unique[d.itemId]) {
+          unique[d.itemId] = {
+            itemId: d.itemId, name: d.name, icon: d.icon, rarity: d.rarity,
+            category: d.category, maxRarity: d.maxRarity || null,
+            itemType: d.itemType || null, proba: d.proba, sources: []
+          };
+        }
+        if (unique[d.itemId].sources.indexOf(b.name) === -1) unique[d.itemId].sources.push(b.name);
+        if (unique[d.itemId].proba == null) unique[d.itemId].proba = d.proba;
+      });
+    });
+    var items = Object.keys(unique).map(function (k) { return unique[k]; });
+    var bossesByName = {};
+    DATA.bosses.forEach(function (b) { bossesByName[b.name] = b; });
+    var itemsById = {};
+    items.forEach(function (i) { itemsById[i.itemId] = i; });
+    var ORDER = { mount: 0, glider: 1, weapon: 2, legendary: 3, other: 4 };
+    items.sort(function (a, b) {
+      return (ORDER[a.category] == null ? 4 : ORDER[a.category]) - (ORDER[b.category] == null ? 4 : ORDER[b.category])
+        || a.name.localeCompare(b.name);
+    });
+    var LABELS = { mount: 'Mounts', glider: 'Gliders', weapon: 'Legendary-ready', legendary: 'Legendaries' };
+    var CAT_ORDER = ['mount', 'glider', 'weapon', 'legendary', 'other'];
+    var CATS = CAT_ORDER.filter(function (c) {
+      return items.some(function (i) { return i.category === c; });
+    });
+
+    function renderChips() {
+      var html = '<button class="chip active" data-cat="all">All</button>';
+      CATS.forEach(function (c) {
+        var label = LABELS[c] || c;
+        if (c === 'weapon') label = 'Weapons';
+        if (c === 'other') label = 'Other';
+        html += '<button class="chip" data-cat="' + c + '">' + label + '</button>';
+      });
+      document.getElementById('chips').innerHTML = html;
+    }
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; }
+    }
+    function save() {
+      try { localStorage.setItem(STORE, JSON.stringify(owned)); } catch (e) {}
+    }
+    function loadRuns() {
+      try { return JSON.parse(localStorage.getItem(RUNS_STORE)) || {}; } catch (e) { return {}; }
+    }
+    function saveRuns() {
+      try { localStorage.setItem(RUNS_STORE, JSON.stringify(runs)); } catch (e) {}
+    }
+    function getRun(key) {
+      var r = runs[key];
+      return { tries: (r && r.tries) || 0, legs: (r && r.legs) || 0 };
+    }
+    function loadItemRuns() {
+      try { return JSON.parse(localStorage.getItem(ITEM_STORE)) || {}; } catch (e) { return {}; }
+    }
+    function saveItemRuns() {
+      try { localStorage.setItem(ITEM_STORE, JSON.stringify(itemRuns)); } catch (e) {}
+    }
+    function getItemRun(id) {
+      var r = itemRuns[id];
+      return { tries: (r && r.tries) || 0, drops: (r && r.drops) || 0 };
+    }
+    function setItemRun(id, field, value) {
+      var cur = itemRuns[id] || { tries: 0, drops: 0 };
+      cur[field] = value;
+      itemRuns[id] = cur;
+      saveItemRuns();
+    }
+    function expectedChance(b) {
+      var sum = 0;
+      b.drops.forEach(function (d) { if (d.proba) sum += d.proba; });
+      return sum;
+    }
+    function bossDropTotal(b) {
+      var n = 0;
+      b.drops.forEach(function (d) { n += getItemRun(d.itemId).drops; });
+      return n;
+    }
+    function rateText(b) {
+      var r = getRun(b.name);
+      var exp = expectedChance(b);
+      var got = bossDropTotal(b);
+      if (r.tries > 0) {
+        return 'got ' + got + ' in ' + r.tries + ' · ' + fmtChance(got / r.tries) + ' (expected ' + fmtChance(exp) + ')';
+      }
+      if (got > 0) return got + ' drop(s) logged · add tries above';
+      return 'expected ' + fmtChance(exp) + '/run';
+    }
+    function itemRateText(i) {
+      var r = getItemRun(i.itemId);
+      if (r.tries > 0) {
+        return 'got ' + r.drops + ' in ' + r.tries + ' · ' + fmtChance(r.drops / r.tries) +
+          ' (expected ' + fmtChance(i.proba) + ')';
+      }
+      if (r.drops > 0) return r.drops + ' drop(s) logged · add tries';
+      return 'expected ' + fmtChance(i.proba) + '/run';
+    }
+    function isOwned(id) { return !!owned[id]; }
+    function toggle(id) {
+      if (owned[id]) delete owned[id]; else owned[id] = 1;
+      save(); render();
+    }
+
+    function pct(a, b) { return b ? Math.round((a / b) * 100) : 0; }
+
+    function catTotals() {
+      var t = {};
+      CAT_ORDER.forEach(function (c) { t[c] = { total: 0, owned: 0 }; });
+      items.forEach(function (i) {
+        if (!t[i.category]) return;
+        t[i.category].total++;
+        if (isOwned(i.itemId)) t[i.category].owned++;
+      });
+      return t;
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function fmtChance(p) {
+      if (p == null) return '';
+      var v = p * 100;
+      var s = v >= 1 ? v.toFixed(v % 1 ? 1 : 0) : v.toFixed(2);
+      if (s.indexOf('.') !== -1) s = s.replace(/0+$/, '').replace(/\.$/, '');
+      return s + '%';
+    }
+
+    function img(src, alt, cls) {
+      if (!src) return '';
+      return '<img src="' + esc(src) + '" alt="' + esc(alt) + '" loading="lazy" ' +
+        'onerror="this.style.display=\'none\'">';
+    }
+
+    function matches(s) { return !state.q || s.toLowerCase().indexOf(state.q) !== -1; }
+
+    function visibleItems() {
+      return items.filter(function (i) {
+        if (state.cat !== 'all' && i.category !== state.cat) return false;
+        if (state.hideOwned && isOwned(i.itemId)) return false;
+        return matches(i.name) || i.sources.some(matches);
+      });
+    }
+
+    function visibleBosses() {
+      return DATA.bosses.filter(function (b) {
+        var drops = b.drops.filter(function (d) {
+          if (state.cat !== 'all' && d.category !== state.cat) return false;
+          if (state.hideOwned && isOwned(d.itemId)) return false;
+          return matches(d.name);
+        });
+        if (state.q && !matches(b.name) && !drops.length) return false;
+        if (state.q && matches(b.name)) return true;
+        if (state.cat !== 'all' && !b.drops.some(function (d) { return d.category === state.cat; })) return false;
+        if (state.hideOwned && b.drops.every(function (d) { return isOwned(d.itemId); })) return false;
+        return true;
+      });
+    }
+
+    function renderStats() {
+      var t = catTotals();
+      var all = items.length;
+      var allOwned = items.filter(function (i) { return isOwned(i.itemId); }).length;
+      var html = '';
+      CATS.forEach(function (c) {
+        var v = t[c] || { total: 0, owned: 0 };
+        html += '<div class="stat ' + c + '">' +
+          '<div class="k">' + (LABELS[c] || c) + '</div>' +
+          '<div class="v">' + v.owned + ' / ' + v.total + '</div>' +
+          '<div class="bar"><i style="width:' + pct(v.owned, v.total) + '%"></i></div></div>';
+      });
+      html += '<div class="stat"><div class="k">Overall</div><div class="v">' + allOwned + ' / ' + all +
+        '</div><div class="bar"><i style="width:' + pct(allOwned, all) + '%"></i></div></div>';
+      document.getElementById('stats').innerHTML = html;
+      document.getElementById('subtitle').textContent =
+        DATA.bosses.length + ' bosses · ' + all + ' tracked drops · data ' +
+        String(DATA.generated || '').slice(0, 10);
+      var notes = [];
+      if (t.weapon && t.weapon.total) notes.push('weapons drop as Rare and upgrade to Legendary (fareverdb rarityRules.weaponMaxRarity)');
+      if (t.legendary.total === 0) notes.push('no boss drops a Legendary directly');
+      document.getElementById('footer').textContent =
+        'Data: ' + (DATA.source || 'fareverdb.com') + ' · filter: ' + (DATA.filter || '') +
+        ' · ticks are saved in this browser' +
+        (notes.length ? ' · ' + notes.join(' · ') : '');
+    }
+
+    function itemCard(i) {
+      var ownedCls = isOwned(i.itemId) ? ' owned' : '';
+      return '<div class="card' + ownedCls + '">' +
+        '<div class="head">' +
+          '<div class="thumb">' + (i.icon ? img(i.icon, i.name) : esc(i.name[0])) + '</div>' +
+          '<div><div class="name">' + esc(i.name) + '</div>' +
+            '<div class="meta">' +
+              '<span class="badge ' + esc(i.category) + '">' + esc(i.category) + '</span>' +
+              (i.rarity ? '<span class="badge rarity-' + esc(i.rarity) + '">' + esc(i.rarity) + '</span>' : '') +
+              (i.maxRarity === 'Legendary' ? '<span class="badge max">&rarr; Legendary</span>' : '') +
+            '</div>' +
+            (i.itemType || i.proba != null ? '<div class="chance">' +
+              (i.itemType ? esc(i.itemType) + (i.proba != null ? ' · ' : '') : '') +
+              (i.proba != null ? 'drop chance ' + fmtChance(i.proba) : '') + '</div>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="sources">From <b>' + i.sources.map(esc).join('</b>, <b>') + '</b></div>' +
+        '<div class="runs">' +
+          '<label class="run-field"><span>Tries</span>' +
+            '<input type="number" min="0" step="1" inputmode="numeric" value="' + getItemRun(i.itemId).tries + '"' +
+            ' data-itemrun="' + esc(i.itemId) + '" data-field="tries"></label>' +
+          '<label class="run-field"><span>Drops</span>' +
+            '<input type="number" min="0" step="1" inputmode="numeric" value="' + getItemRun(i.itemId).drops + '"' +
+            ' data-itemrun="' + esc(i.itemId) + '" data-field="drops"></label>' +
+        '</div>' +
+        '<div class="run-rate" data-itemrate="' + esc(i.itemId) + '">' + esc(itemRateText(i)) + '</div>' +
+        '<button class="own-btn" data-id="' + esc(i.itemId) + '">' +
+          (isOwned(i.itemId) ? '✓ Owned — click to undo' : 'Not owned yet') +
+        '</button></div>';
+    }
+
+    function bossCard(b) {
+      var drops = b.drops.filter(function (d) {
+        if (state.cat !== 'all' && d.category !== state.cat) return false;
+        if (state.hideOwned && isOwned(d.itemId)) return false;
+        if (state.q && matches(b.name)) return true;
+        return matches(d.name);
+      });
+      var ownedCount = b.drops.filter(function (d) { return isOwned(d.itemId); }).length;
+      var rows = drops.map(function (d) {
+        var o = isOwned(d.itemId);
+        return '<div class="drop-row' + (o ? ' owned' : '') + '" data-id="' + esc(d.itemId) + '">' +
+          '<div class="dthumb">' + (d.icon ? img(d.icon, d.name) : '') + '</div>' +
+          '<div class="dname">' + esc(d.name) + '</div>' +
+          '<div class="dchance">' + fmtChance(d.proba) + '</div>' +
+          '<input class="row-count" type="number" min="0" step="1" inputmode="numeric" title="Drops logged for this item"' +
+            ' value="' + getItemRun(d.itemId).drops + '" data-itemrun="' + esc(d.itemId) + '" data-field="drops">' +
+          '<div class="tick">✓</div></div>';
+      }).join('');
+      return '<div class="card boss-card">' +
+        '<div class="head">' +
+          '<div class="thumb">' + (b.image ? img(b.image, b.name) : esc(b.name[0])) + '</div>' +
+          '<div class="boss-info"><div class="name">' + esc(b.name) + '</div>' +
+            '<div class="lvl">Lv ' + esc(b.level) + ' · ' +
+              (b.category === 'world-boss' ? 'World boss' : 'Boss') +
+              (b.ids && b.ids.length > 1 ? ' · ' + b.ids.length + ' variants' : '') + '</div>' +
+            '<div class="meta">' +
+              b.drops.map(function (d) {
+                return '<span class="badge ' + esc(d.category) + '" title="">' + esc(d.category) + '</span>';
+              }).filter(function (v, idx, arr) { return arr.indexOf(v) === idx; }).join('') +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="progress"><span>' + ownedCount + '/' + b.drops.length + '</span>' +
+          '<span class="track"><i style="width:' + pct(ownedCount, b.drops.length) + '%"></i></span></div>' +
+        '<div class="drops">' + (rows || '<div class="empty">Nothing matches</div>') + '</div>' +
+        runsBlock(b) + '</div>';
+    }
+
+    function runsBlock(b) {
+      var r = getRun(b.name);
+      return '<div class="runs">' +
+        '<label class="run-field"><span>Tries on this boss</span>' +
+          '<input type="number" min="0" step="1" inputmode="numeric" value="' + r.tries + '"' +
+          ' data-run="' + esc(b.name) + '" data-field="tries"></label>' +
+        '</div>' +
+        '<div class="run-rate" data-rate="' + esc(b.name) + '">' + esc(rateText(b)) + '</div>';
+    }
+
+    function render() {
+      renderStats();
+      var view = document.getElementById('view');
+      if (state.tab === 'items') {
+        var list = visibleItems();
+        view.innerHTML = list.length
+          ? '<div class="grid">' + list.map(itemCard).join('') + '</div>'
+          : '<div class="empty">No drops match this filter.</div>';
+      } else {
+        var bs = visibleBosses();
+        view.innerHTML = bs.length
+          ? '<div class="grid">' + bs.map(bossCard).join('') + '</div>'
+          : '<div class="empty">No bosses match this filter.</div>';
+      }
+    }
+
+    document.getElementById('view').addEventListener('click', function (e) {
+      if (e.target.tagName === 'INPUT') return;
+      var t = e.target.closest('[data-id]');
+      if (t) toggle(t.getAttribute('data-id'));
+    });
+    document.getElementById('view').addEventListener('input', function (e) {
+      var el = e.target;
+      if (!el.getAttribute) return;
+      var v = parseInt(el.value, 10);
+      if (!isFinite(v) || v < 0) v = 0;
+
+      var itemKey = el.getAttribute('data-itemrun');
+      var bossKey = el.getAttribute('data-run');
+      if (itemKey) {
+        setItemRun(itemKey, el.getAttribute('data-field') === 'tries' ? 'tries' : 'drops', v);
+      } else if (bossKey) {
+        var cur = runs[bossKey] || { tries: 0, legs: 0 };
+        cur[el.getAttribute('data-field') === 'legs' ? 'legs' : 'tries'] = v;
+        runs[bossKey] = cur;
+        saveRuns();
+      } else {
+        return;
+      }
+
+      var card = el.closest('.card');
+      if (!card) return;
+      var rateEl = card.querySelector('.run-rate');
+      if (!rateEl) return;
+      var bossName = rateEl.getAttribute('data-rate');
+      var itemId = rateEl.getAttribute('data-itemrate');
+      if (bossName && bossesByName[bossName]) rateEl.textContent = rateText(bossesByName[bossName]);
+      else if (itemId && itemsById[itemId]) rateEl.textContent = itemRateText(itemsById[itemId]);
+    });
+    document.querySelectorAll('.tabs button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        state.tab = b.getAttribute('data-tab');
+        document.querySelectorAll('.tabs button').forEach(function (x) { x.classList.toggle('active', x === b); });
+        render();
+      });
+    });
+    document.getElementById('chips').addEventListener('click', function (e) {
+      var c = e.target.closest('.chip');
+      if (!c) return;
+      state.cat = c.getAttribute('data-cat');
+      document.querySelectorAll('.chip').forEach(function (x) { x.classList.toggle('active', x === c); });
+      render();
+    });
+    document.getElementById('search').addEventListener('input', function (e) {
+      state.q = e.target.value.trim().toLowerCase();
+      render();
+    });
+    document.getElementById('hideOwned').addEventListener('change', function (e) {
+      state.hideOwned = e.target.checked;
+      render();
+    });
+    document.getElementById('reset').addEventListener('click', function () {
+      var hasRuns = Object.keys(runs).some(function (k) { return runs[k].tries || runs[k].legs; });
+      var hasItemRuns = Object.keys(itemRuns).some(function (k) { return itemRuns[k].tries || itemRuns[k].drops; });
+      if (!Object.keys(owned).length && !hasRuns && !hasItemRuns) return;
+      if (!confirm('Clear every owned tick and all try/drop counts?')) return;
+      owned = {};
+      runs = {};
+      itemRuns = {};
+      save();
+      saveRuns();
+      saveItemRuns();
+      render();
+    });
+
+    renderChips();
+    render();
+  }
+
+  if (DATA) {
+    boot(DATA);
+  } else {
+    fetch('data/bosses.json')
+      .then(function (r) { return r.json(); })
+      .then(boot)
+      .catch(function (e) {
+        document.getElementById('view').innerHTML =
+          '<div class="empty">Could not load data/bosses.json — run <code>node scrape.js</code> first.<br>' +
+          esc(e.message) + '</div>';
+      });
+  }
+})();
+</script>
+</body>
+</html>

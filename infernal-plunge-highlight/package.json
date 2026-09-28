@@ -1,0 +1,31 @@
+{
+  "name": "farever-infernal-plunge-highlight",
+  "displayName": "Infernal Plunge Highlighter",
+  "description": "Highlights Infernal Plunge (Rogue) when target has Chaos Mark.",
+  "version": "1.0.0",
+  "author": "Denoru",
+  "license": "MIT",
+  "game": "farever",
+  "steamAppId": 3672400,
+  "hlxMod": true,
+  "modType": "hlx",
+  "runtime": "hlmod",
+  "minFareverVersion": "1.0.0",
+  "class": "Rogue",
+  "skill": "Infernal Plunge",
+  "trigger": "Chaos Mark",
+  "main": "src/Main.hx",
+  "haxelibs": ["hl-imgui"],
+  "compile": "haxe -cp src -cp <hlx-core>/hlx-runtime/src -cp <hl-imgui>/src -main Main -hl hlx/mods/infernal-plunge-highlight/infernal-plunge-highlight.hl",
+    "scripts": {
+      "build": "node build.js",
+      "compile": "haxe -cp src -cp <hlx-core>/hlx-runtime/src -cp <hl-imgui>/src -main Main -hl hlx/mods/infernal-plunge-highlight/infernal-plunge-highlight.hl",
+    "package": "node build.js --zip",
+    "deploy": "npm run compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/denoru/farever-mods"
+  },
+  "keywords": ["farever", "rogue", "infernal-plunge", "chaos-mark", "mod", "addon", "hlx", "hashlink"]
+}
