@@ -102,7 +102,7 @@ function build() {
     const haxePath = 'C:\\HaxeToolkit\\haxe_20240807093059_760c0dd\\haxe.exe';
     const srcDir = path.join(ROOT, 'src');
     const hlxRuntimeDir = process.env.HLX_RUNTIME_SRC || path.join(ROOT, '..', 'hlx-core', 'hlx-runtime', 'src');
-    const hlImguiDir = path.join(ROOT, 'farever-mods', 'imgui', 'hl-imgui', 'src');
+    const hlImguiDir = process.env.HL_IMGUI_SRC || path.join(ROOT, '..', 'hl-imgui', 'src');
     const hlOutput = path.join(GAME_DIR, 'hlx', 'mods', 'infernal-plunge-highlight', 'infernal-plunge-highlight.hl');
 
     if (fs.existsSync(haxePath) && fs.existsSync(srcDir)) {

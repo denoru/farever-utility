@@ -52,9 +52,11 @@ dist/farever-infernal-plunge-highlight.zip  # Vortex-compatible release
 
 ## Build
 
-Requires Haxe 4.3.x. Set the `HLX_RUNTIME_SRC` environment variable to your
-`hlx-core/hlx-runtime/src` checkout (or place `hlx-core` next to this project),
-and adjust the `-cp` paths in `compile.hxml`.
+Requires Haxe 4.3.x. Point the build at your library checkouts:
+
+- `HLX_RUNTIME_SRC` → `hlx-core/hlx-runtime/src` (https://github.com/hlx-framework/hlx-core)
+- `HL_IMGUI_SRC` → `hl-imgui/src` (https://github.com/laymain/farever-mods/tree/master/imgui/hl-imgui)
+- for direct `haxe` use, adjust the `-cp` paths in `compile.hxml` instead
 
 ```bash
 node build.js

@@ -1,4 +1,4 @@
-# farever-mods
+# farever-utility
 
 Personal mods and tools for [Farever](https://store.steampowered.com/app/3672400/).
 
