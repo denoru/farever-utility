@@ -1,8 +1,8 @@
 {
   "name": "farever-cast-sequence",
   "displayName": "Cast Sequence",
-  "description": "Single-key skill sequencer: casts the skill shown in the HUD slot, skips to next ready step, resets after a full loop.",
-  "version": "0.1.0",
+  "description": "Single-key skill sequencer: strict-order rotation on one key, combat-end cursor reset, Chaos Mark gate for Infernal Plunge, plus a hotkey-press mode.",
+  "version": "0.2.0",
   "author": "Denoru",
   "license": "MIT",
   "game": "farever",

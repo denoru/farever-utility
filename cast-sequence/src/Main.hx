@@ -217,7 +217,6 @@ class Main {
 	static var addBuf:hl.Bytes = null;
 	static var imguiRegistered:Bool = false;
 	static var imguiInitAttempted:Bool = false;
-	static var probed:Bool = false;
 
 	static function main():Void {
 		if (addBuf == null) addBuf = new hl.Bytes(ADD_BUF_SIZE);
@@ -299,16 +298,23 @@ class Main {
 		return true;
 	}
 
+	static var rmAppGet:ResolvedMember = null;
+	static var appGetTried = false;
+
 	static function getApp():Dynamic {
-		try {
-			var tApp = HlxRuntime.resolveType("GameApp");
-			if (tApp != null) {
-				var rmGet = HlxRuntime.resolveMember(tApp, "get");
-				if (rmGet != null) {
-					var app = HlxRuntime.callResolved(rmGet, []);
-					if (app != null) return app;
+		if (!appGetTried) {
+			try {
+				var tApp = HlxRuntime.resolveType("GameApp");
+				if (tApp != null) {
+					rmAppGet = HlxRuntime.resolveMember(tApp, "get");
+					appGetTried = true;
 				}
-			}
+			} catch (_:Dynamic) {}
+		}
+		if (rmAppGet == null) return null;
+		try {
+			var app = HlxRuntime.callResolved(rmAppGet, []);
+			if (app != null) return app;
 		} catch (_:Dynamic) {}
 		return null;
 	}
@@ -340,8 +346,22 @@ class Main {
 	}
 
 	static var renameCache = new Map<String, String>();
+	static var skillMemo = new Map<String, {t:Float, sk:Dynamic}>();
+	static inline var SKILL_MEMO_TTL = 0.3;
 
+	// memoized per kind (including misses) so per-frame HUD/editor reads don't
+	// re-run reflection + slot scans every frame; 0.3s keeps equip changes fresh
 	static function skillOf(kind:String):Dynamic {
+		if (!ensureResolved()) return null;
+		var now = haxe.Timer.stamp();
+		var m = skillMemo.get(kind);
+		if (m != null && now - m.t < SKILL_MEMO_TTL) return m.sk;
+		var sk = skillOfRaw(kind);
+		skillMemo.set(kind, {t: now, sk: sk});
+		return sk;
+	}
+
+	static function skillOfRaw(kind:String):Dynamic {
 		if (!ensureResolved()) return null;
 		var hero = getHero();
 		if (hero == null || rmGetSkill == null) return null;
@@ -412,7 +432,7 @@ class Main {
 		if (now - slotDumpAt < 1.0) return;
 		slotDumpAt = now;
 		var hero = getHero();
-		if (hero == null) { trace("slots(" + label + "): hero=null"); return; }
+		if (hero == null) return;
 		for (f in ["attackSkills", "weaponSkills", "skillSlots", "secondarySkill", "dashSkill", "attackComboSkill"]) {
 			try {
 				var a:Dynamic = Reflect.field(hero, f);
@@ -456,7 +476,6 @@ class Main {
 	static function cooldownOf(kind:String):Float {
 		var sk = skillOf(kind);
 		if (sk == null) {
-			dumpSlots("miss:" + kind);
 			return -1;
 		}
 		if (rmCdLeft != null) {
@@ -649,21 +668,6 @@ class Main {
 			var f:Dynamic = skillTargetFactory;
 			return f(unit);
 		} catch (_:Dynamic) return null;
-	}
-
-	static function findTargetEntity():Dynamic {
-		var hero = getHero();
-		var ctrl = getController();
-		for (src in [hero, ctrl]) {
-			if (src == null) continue;
-			for (f in ["target", "targetEnemy", "currentTarget", "lockTarget", "aimTarget", "targetUnit"]) {
-				try {
-					var v:Dynamic = Reflect.field(src, f);
-					if (v != null) return v;
-				} catch (_:Dynamic) {}
-			}
-		}
-		return null;
 	}
 
 	static function buildAimPoint(hero:Dynamic, d:Float):Dynamic {
@@ -901,7 +905,20 @@ class Main {
 		return null;
 	}
 
+	static var markMemoAt:Float = -999;
+	static var markMemoVal = false;
+
+	// 0.2s memo: nextCastIdx/HUD scan statuses every frame; the press path may
+	// see a value up to 0.2s old — far below human re-press latency
 	static function targetHasChaosMark():Bool {
+		var now = haxe.Timer.stamp();
+		if (now - markMemoAt < 0.2) return markMemoVal;
+		markMemoAt = now;
+		markMemoVal = computeChaosMark();
+		return markMemoVal;
+	}
+
+	static function computeChaosMark():Bool {
 		var target = getMarkTarget();
 		if (target == null) return false;
 		try {
@@ -936,7 +953,8 @@ class Main {
 	// ---------------------------------------------------------------- combat state
 
 	static var combatPathLogged = false;
-	static var combatWas = false;
+	static var inCombatPrev = false;
+	static var outSince:Float = -999;
 	static var lastActivityAt:Float = -999;
 	static var lastHeroHp:Float = -1;
 	static var lastTgtHp:Float = -1;
@@ -1038,22 +1056,23 @@ class Main {
 		// never skip a not-ready/rejected step or wrap out of sequence
 		var walkLen = strictOn() ? 1 : len;
 		// charge-window skills (Void Fangs knives) jump the queue while charges last:
-		// CD says not-ready, but charges keep it throwable until the window expires
+		// CD says not-ready, but charges keep it throwable until the window expires.
+		// Requires knivesOut() to match nextCastIdx() — eff variants alone can't tell
+		// a live throw window from a bogus always-self eff.
 		for (n in 0...walkLen) {
 			var idx = (cursor + n) % len;
 			var kind = config.steps[idx];
 			if (gateReason(kind) != null) continue;
 			var skP = skillOf(kind);
-			if (skP != null && effOf(skP) != null && windowOpen(kind, skP)) {
+			if (skP != null && effOf(skP) != null && knivesOut() && windowOpen(kind, skP)) {
 				if (tryCast(kind)) {
 					noteThrow(kind);
 					trace("cast(charged) " + kind + " at " + idx + " via=" + lastCastVia + " left=" + throwsLeft(kind));
 					cursor = (idx + 1) % len;
-					return;
 				}
-				// real window but cast failed: don't spam other steps either
-				if (knivesOut()) return;
-				// bogus window (e.g. _Shoot step's always-self effOf, no knives): fall through
+				// window is real: a failed cast must not fall through to
+				// other steps on the same press (would break strict order)
+				return;
 			}
 		}
 		for (n in 0...walkLen) {
@@ -1099,62 +1118,6 @@ class Main {
 		trace("trigger: no skill ready; " + sum.join(" "));
 	}
 
-	// ---------------------------------------------------------------- probe (dev)
-
-	static function probe():Void {
-		if (probed) return;
-		if (!ensureResolved()) return;
-		var hero = getHero();
-		if (hero == null) return;
-		probed = true;
-
-		var ctrl = getController();
-		trace("probe: controller=" + (ctrl != null) + " hero=" + (hero != null));
-
-		for (f in ["attackSkills", "weaponSkills", "skillSlots", "secondarySkill", "dashSkill", "attackComboSkill"]) {
-			try {
-				var arr:Dynamic = Reflect.field(hero, f);
-				if (arr == null) {
-					trace("probe " + f + " = null");
-				} else {
-					var a:Dynamic = arr;
-					var proxy = Reflect.field(a, "array");
-					if (proxy != null) {
-						var dynArr = Reflect.field(proxy, "array");
-						if (dynArr != null) a = dynArr;
-					}
-					var getDyn = Reflect.field(a, "getDyn");
-					var n = 0;
-					if (getDyn != null) {
-						for (i in 0...30) {
-							var sk:Dynamic = null;
-							try sk = Reflect.callMethod(a, getDyn, [i]) catch (_:Dynamic) {}
-							if (sk == null) break;
-						var kind = fieldStr(sk, "kind");
-						if (kind == null && Std.isOfType(sk, String)) kind = cast sk;
-						if (kind == null) kind = fieldStr(sk, "skillId");
-							if (kind == null) kind = fieldStr(sk, "id");
-							if (kind == null) kind = fieldStr(sk, "name");
-							var cls = "?";
-							try cls = Type.getClassName(Type.getClass(sk)) catch (_:Dynamic) {}
-							trace("probe " + f + "[" + i + "] kind=" + kind + " cls=" + cls);
-							if (i == 0) {
-								try {
-									var flds = Type.getInstanceFields(Type.getClass(sk));
-									trace("probe fields: " + flds.join(","));
-								} catch (_:Dynamic) {}
-							}
-							n++;
-						}
-					}
-					trace("probe " + f + " count=" + n);
-				}
-			} catch (e:Dynamic) {
-				trace("probe " + f + " error: " + e);
-			}
-		}
-	}
-
 	static function fieldStr(o:Dynamic, name:String):String {
 		var v:Dynamic = Reflect.field(o, name);
 		if (v == null) return null;
@@ -1179,196 +1142,6 @@ class Main {
 		if (config.steps.length == 0) return null;
 		if (cursor >= config.steps.length) cursor = 0;
 		return config.steps[cursor];
-	}
-
-	// ---------------------------------------------------------------- shoot api dump (dev)
-
-	static var shootDumped = false;
-
-	static function dumpFieldsChunked(tag:String, c:Class<Dynamic>):Void {
-		try {
-			var fs = Type.getInstanceFields(c);
-			if (fs == null || fs.length == 0) return;
-			var all = fs.join(",");
-			var pos = 0;
-			var chunk = 0;
-			while (pos < all.length) {
-				var n = all.length - pos > 900 ? 900 : all.length - pos;
-				trace("dump: " + tag + " fields[" + chunk + "]: " + all.substr(pos, n));
-				pos += n;
-				chunk++;
-			}
-		} catch (e:Dynamic) {
-			trace("dump " + tag + " fields err: " + e);
-		}
-	}
-
-	static function dumpShootApi():Void {
-		if (shootDumped || isHotkeyMode()) return;
-		var sk = skillOf("Daggers_Demondash_Skill2");
-		if (sk == null) return;
-		var eff = effOf(sk);
-		if (eff == null) return;
-		shootDumped = true;
-		try {
-			dumpShootApiInner(sk, eff);
-		} catch (e:Dynamic) {
-			trace("dump: error " + e);
-			trace("dump stack: " + haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
-		}
-	}
-
-	static function dumpScriptFor(tag:String, s:Dynamic, names:Array<String>):Void {
-		try {
-			var sc:Dynamic = Reflect.field(s, "script");
-			if (sc == null) {
-				trace("dump: " + tag + " script=null");
-				return;
-			}
-			var c = Type.getClass(sc);
-			trace("dump: " + tag + " script class=" + (c != null ? Type.getClassName(c) : "null"));
-			if (c != null) dumpFieldsChunked(tag + " script", c);
-			for (nm in names) {
-				try {
-					var m = HlxRuntime.resolveMemberOf(c, nm);
-					if (m == null) continue;
-					try {
-						var r:Dynamic = HlxRuntime.callResolved(m, [sc]);
-						trace("dump: " + tag + "." + nm + "() executed ret=" + Std.string(r));
-					} catch (eC:Dynamic) {
-						trace("dump: " + tag + "." + nm + " err: " + eC);
-					}
-				} catch (e:Dynamic) {}
-			}
-		} catch (e:Dynamic) {
-			trace("dump: " + tag + " script err: " + e);
-		}
-	}
-
-	static function tryPoint(tag:String, tTarget:Dynamic, arg:Dynamic, cands:Array<Dynamic>, cnames:Array<String>):Void {
-		if (arg == null) return;
-		try {
-			var p:Dynamic = HlxRuntime.constructEnum(tTarget, "Point", [arg]);
-			if (p != null) {
-				cands.push(p);
-				cnames.push("Point(" + tag + ")");
-				trace("dump: Point(" + tag + ") built");
-			} else {
-				trace("dump: Point(" + tag + ") = null");
-			}
-		} catch (e:Dynamic) {
-			trace("dump: Point(" + tag + ") err: " + e);
-		}
-	}
-
-	static function dumpShootApiInner(sk:Dynamic, eff:Dynamic):Void {
-		trace("dump: ==== Void Fangs v5 (fireProjectile + 1-arg target) ====");
-		dumpScriptFor("base", sk, ["makeTarget"]);
-		dumpScriptFor("eff", eff, ["fireProjectile", "onUseSkill", "makeTarget"]);
-
-		var tTarget = HlxRuntime.resolveType("st.skill.SkillTarget");
-		trace("dump: tTarget resolved=" + (tTarget != null));
-		var cands = new Array<Dynamic>();
-		var cnames = new Array<String>();
-		var hero = getHero();
-		if (hero == null) {
-			trace("dump: no hero");
-			return;
-		}
-		var aim:Dynamic = null;
-		try {
-			var rmAim = HlxRuntime.resolveMemberOf(Type.getClass(hero), "getAim3D");
-			aim = rmAim != null ? HlxRuntime.callResolved(rmAim, [hero]) : null;
-			var an = aim != null ? Std.string(Type.getClassName(Type.getClass(aim))) : "null";
-			var av = "n/a";
-			if (aim != null) {
-				try av = "(" + Std.string(Reflect.field(aim, "x")) + "," + Std.string(Reflect.field(aim, "y")) + "," + Std.string(Reflect.field(aim, "z")) + ")" catch (_:Dynamic) {}
-			}
-			trace("dump: aim class=" + an + " " + av);
-		} catch (e:Dynamic) {
-			trace("dump: aim err " + e);
-		}
-		var posObj:Dynamic = null;
-		for (f in ["pos", "position", "worldPos"]) {
-			try {
-				var p:Dynamic = Reflect.field(hero, f);
-				if (p != null) {
-					trace("dump: hero." + f + " class=" + Std.string(Type.getClassName(Type.getClass(p))));
-					if (posObj == null) posObj = p;
-				}
-			} catch (e:Dynamic) {}
-		}
-		for (mn in ["getPos", "getPosition", "getPos3D", "getWorldPos"]) {
-			if (posObj != null) break;
-			try {
-				var m = HlxRuntime.resolveMemberOf(Type.getClass(hero), mn);
-				if (m == null) continue;
-				var p:Dynamic = HlxRuntime.callResolved(m, [hero]);
-				if (p != null) {
-					trace("dump: hero." + mn + " -> class=" + Std.string(Type.getClassName(Type.getClass(p))));
-					posObj = p;
-				}
-			} catch (e:Dynamic) {
-				trace("dump: hero." + mn + " err: " + e);
-			}
-		}
-		var foe:Dynamic = null;
-		try {
-			var esc:Dynamic = Reflect.field(eff, "script");
-			var ec = esc != null ? Type.getClass(esc) : null;
-			if (ec != null) {
-				for (nm in ["findTarget", "getBestTarget", "getAITarget"]) {
-					if (foe != null) break;
-					try {
-						var m = HlxRuntime.resolveMemberOf(ec, nm);
-						if (m == null) continue;
-						var r:Dynamic = HlxRuntime.callResolved(m, [esc]);
-						var rn = r != null ? Std.string(Type.getClassName(Type.getClass(r))) : "null";
-						trace("dump: foe via " + nm + " -> class=" + rn);
-						if (r != null && rn.indexOf("GameObject") >= 0) foe = r;
-					} catch (e:Dynamic) {
-						trace("dump: foe via " + nm + " err: " + e);
-					}
-				}
-			}
-		} catch (e:Dynamic) {
-			trace("dump: foe block err " + e);
-		}
-		if (tTarget != null) {
-			var arr3 = [Reflect.field(aim, "x"), Reflect.field(aim, "y"), Reflect.field(aim, "z")];
-			tryPoint("aim", tTarget, aim, cands, cnames);
-			tryPoint("aimArr", tTarget, arr3, cands, cnames);
-			tryPoint("pos", tTarget, posObj, cands, cnames);
-			if (foe != null) {
-				try {
-					var t:Dynamic = HlxRuntime.constructEnum(tTarget, "Target", [foe]);
-					if (t != null) {
-						cands.push(t);
-						cnames.push("Target(foe)");
-						trace("dump: Target(foe) built");
-					}
-				} catch (e:Dynamic) {
-					trace("dump: Target(foe) err: " + e);
-				}
-			}
-		}
-		if (rmCheckUse != null) {
-			if (cands.length == 0) trace("dump: no target candidates built");
-			for (i in 0...cands.length) {
-				try {
-					var r1:Dynamic = HlxRuntime.callResolved(rmCheckUse, [eff, cands[i]]);
-					trace("dump: checkUse eff @ " + cnames[i] + " = " + Std.string(r1));
-				} catch (e:Dynamic) {
-					trace("dump: checkUse eff @ " + cnames[i] + " err: " + e);
-				}
-				try {
-					var r0:Dynamic = HlxRuntime.callResolved(rmCheckUse, [sk, cands[i]]);
-					trace("dump: checkUse base @ " + cnames[i] + " = " + Std.string(r0));
-				} catch (e:Dynamic) {
-					trace("dump: checkUse base @ " + cnames[i] + " err: " + e);
-				}
-			}
-		}
 	}
 
 	static function draw():Void {
@@ -1410,9 +1183,11 @@ class Main {
 				var cd = cooldownOf(step);
 				var skS = skillOf(step);
 				var ready = isReady(step);
+				var gr = gateReason(step);
 				var col = 0xFFFFFFFF;
 				var status = "";
-				if (cd == -1) { col = 0xFF4444FF; status = "NOT FOUND"; }
+				if (gr != null) { col = 0xFF00C8FF; status = "WAIT: " + gr; }
+				else if (cd == -1) { col = 0xFF4444FF; status = "NOT FOUND"; }
 				else if (ready) {
 					col = 0xFF00FF00;
 					status = "READY" + chargeSuffix(step, skS, cd);
@@ -1482,7 +1257,8 @@ class Main {
 			ImGui.separator();
 			var hkMode = isHotkeyMode();
 			if (ImGui.button(hkMode ? "Mode: Hotkeys" : "Mode: Skills")) {
-				config.mode = hkMode ? "skill" : "hotkey";
+				config.mode = hkMode ? "hotkey" : "skill";
+				cursor = 0;
 				config.save();
 			}
 			ImGui.sameLine();
@@ -1570,6 +1346,11 @@ class Main {
 					ImGui.textDisabled("ready" + chargeSuffix(kind, skE, cd));
 				else ImGui.textDisabled((Math.round(cd * 10) / 10) + "s" + chargeSuffix(kind, skE, cd));
 
+				if (gateReason(kind) != null) {
+					ImGui.sameLine();
+					ImGui.textDisabled("gated");
+				}
+
 				ImGui.sameLine();
 				if (i > 0 && ImGui.smallButton("^")) moveStep(i, i - 1);
 				ImGui.sameLine();
@@ -1654,22 +1435,32 @@ class Main {
 	static function onGameAppUpdate(instance:Dynamic, dt:Float, result:Void):Void {
 		ensureImGui();
 		try {
-			if (!isHotkeyMode()) probe();
-			dumpShootApi();
-			// combat end -> back to step 1 (fresh combo for the next fight)
+			// combat end -> back to step 1 (fresh combo for the next fight).
+			// 2s debounce: a one-frame flag flicker must never reset mid-fight,
+			// and the reset fires exactly once per real combat -> out transition
+			var nowT = haxe.Timer.stamp();
 			var flag = combatFlag();
 			var cb:Bool;
 			if (flag != null) cb = flag;
 			else {
 				pollActivity();
-				cb = haxe.Timer.stamp() - lastActivityAt < 4.0;
+				cb = nowT - lastActivityAt < 4.0;
 			}
-			if (combatWas && !cb && cursor != 0) {
-				trace("combat end: cursor reset " + cursor + " -> 0");
-				cursor = 0;
+			if (cb) {
+				inCombatPrev = true;
+				outSince = -999;
+			} else {
+				if (inCombatPrev) {
+					inCombatPrev = false;
+					outSince = nowT;
+				}
+				if (outSince >= 0 && nowT - outSince >= 2.0) {
+					if (cursor != 0) trace("combat end: cursor reset " + cursor + " -> 0");
+					cursor = 0;
+					outSince = -999;
+				}
 			}
-			combatWas = cb;
-			if (!isHotkeyMode() && !statusLogged && probed && config.steps.length > 0) {
+			if (!isHotkeyMode() && !statusLogged && getHero() != null && config.steps.length > 0) {
 				statusLogged = true;
 				var seen = new Map<String, Bool>();
 				for (kind in config.steps) {
