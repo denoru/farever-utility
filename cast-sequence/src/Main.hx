@@ -17,6 +17,7 @@ typedef CastSequenceConfig = {
 	var hotkeys:String;
 	var stepDelayMs:Int;
 	var strictOrder:Bool;
+	var plungeNeedsMark:Bool;
 }
 
 @:build(hlx.runtime.Mod.build())
@@ -25,6 +26,8 @@ class Main {
 	static final HK_BUF_SIZE = 128;
 	static final DEFAULT_HOTKEYS = "R>2>E>Q>G>3>2>1>T>2>1>T>2>T";
 	static final DEFAULT_INJECTOR = "C:/Program Files (x86)/Steam/steamapps/common/Farever/hlx/mods/cast-sequence/injector.exe";
+	static final PLUNGE_KIND = "Daggers_Demondash_Skill1"; // Infernal Plunge
+	static final MARK_STATUSES = ["Daggers_Demondash_Mark", "Status_Chaos_Mark", "Chaos_Mark"];
 
 	static final KEY_NAMES = [
 		"Space", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
@@ -46,7 +49,8 @@ class Main {
 		mode: "skill",
 		hotkeys: DEFAULT_HOTKEYS,
 		stepDelayMs: 300,
-		strictOrder: true
+		strictOrder: true,
+		plungeNeedsMark: true
 	};
 
 	static var lastHotkeyAt:Float = 0;
@@ -61,6 +65,11 @@ class Main {
 	// skips ahead; a missing saved value counts as ON
 	static function strictOn():Bool {
 		return config.strictOrder != false;
+	}
+
+	// Infernal Plunge only fires on a Chaos-Marked target; missing value = ON
+	static function plungeGateOn():Bool {
+		return config.plungeNeedsMark != false;
 	}
 
 	static var hkBuf:hl.Bytes = null;
@@ -831,20 +840,169 @@ class Main {
 			if (ctrl != null && rmTryUse != null) {
 				try {
 					var r:Dynamic = HlxRuntime.callResolved(rmTryUse, [ctrl, s, tgt]);
-					if (!Std.isOfType(r, Bool) || r == true) { lastCastVia = labels[ci]; return true; }
+					if (!Std.isOfType(r, Bool) || r == true) { lastCastVia = labels[ci]; noteActivity(); return true; }
 					lastErr = "rejected";
 				} catch (e:Dynamic) lastErr = Std.string(e);
 			}
 			if (rmDoUse != null) {
 				try {
 					var r:Dynamic = HlxRuntime.callResolved(rmDoUse, [hero, s, tgt, null]);
-					if (!Std.isOfType(r, Bool) || r == true) { lastCastVia = labels[ci]; return true; }
+					if (!Std.isOfType(r, Bool) || r == true) { lastCastVia = labels[ci]; noteActivity(); return true; }
 					lastErr = "rejected";
 				} catch (e:Dynamic) lastErr = Std.string(e);
 			}
 		}
 		if (lastErr != null) trace("cast failed " + kind + ": " + lastErr);
 		return false;
+	}
+
+	// ---------------------------------------------------------------- chaos mark gate
+
+	static function statusName(st:Dynamic):String {
+		for (f in ["kind", "name", "statusName", "id"]) {
+			try {
+				var v:Dynamic = Reflect.field(st, f);
+				if (v != null) {
+					var s = Std.string(v);
+					if (s != "" && s != "unknown" && s != "st.skill.Status") return s;
+				}
+			} catch (_:Dynamic) {}
+		}
+		try {
+			var cc = Type.getClass(st);
+			if (cc != null) {
+				var cn = Std.string(Type.getClassName(cc));
+				if (cn != null && cn != "" && cn != "unknown" && cn != "st.skill.Status") return cn;
+			}
+		} catch (_:Dynamic) {}
+		var str = Std.string(st);
+		var h = str.indexOf("#");
+		return h > 0 ? str.substring(0, h) : str;
+	}
+
+	static function isMarkName(s:String):Bool {
+		for (m in MARK_STATUSES) if (s == m) return true;
+		return s.toLowerCase().indexOf("chaos") >= 0;
+	}
+
+	static function getMarkTarget():Dynamic {
+		var t = findUnitTarget();
+		if (t != null) return t;
+		var hero = getHero();
+		if (hero == null) return null;
+		for (m in ["get_target", "get_targetUnit", "getTarget"]) {
+			try {
+				var rm = HlxRuntime.resolveMemberOf(Type.getClass(hero), m);
+				if (rm == null) continue;
+				var v:Dynamic = HlxRuntime.callResolved(rm, [hero]);
+				if (v != null) return v;
+			} catch (_:Dynamic) {}
+		}
+		return null;
+	}
+
+	static function targetHasChaosMark():Bool {
+		var target = getMarkTarget();
+		if (target == null) return false;
+		try {
+			var statuses:Dynamic = Reflect.field(target, "statuses");
+			if (statuses == null) return false;
+			var arr:Dynamic = statuses;
+			var pa = Reflect.field(arr, "array");
+			if (pa != null) {
+				var da = Reflect.field(pa, "array");
+				if (da != null) arr = da;
+			}
+			var getDyn = Reflect.field(arr, "getDyn");
+			if (getDyn != null) {
+				for (i in 0...100) {
+					var st:Dynamic = null;
+					try st = Reflect.callMethod(arr, getDyn, [i]) catch (_:Dynamic) {}
+					if (st == null) break;
+					if (isMarkName(statusName(st))) return true;
+				}
+			}
+		} catch (_:Dynamic) {}
+		return false;
+	}
+
+	// extra cast permission per step; null = allowed
+	static function gateReason(kind:String):String {
+		if (kind == PLUNGE_KIND && plungeGateOn() && !targetHasChaosMark())
+			return "target has no Chaos Mark";
+		return null;
+	}
+
+	// ---------------------------------------------------------------- combat state
+
+	static var combatPathLogged = false;
+	static var combatWas = false;
+	static var lastActivityAt:Float = -999;
+	static var lastHeroHp:Float = -1;
+	static var lastTgtHp:Float = -1;
+
+	static function noteActivity():Void {
+		lastActivityAt = haxe.Timer.stamp();
+	}
+
+	// game truth first: unit.isInCombat is used by the shipped skill scripts
+	// (skills_only.json); null when the property can't be read -> activity fallback
+	static function combatFlag():Null<Bool> {
+		var hero = getHero();
+		if (hero == null) return null;
+		for (f in ["isInCombat", "inCombat"]) {
+			try {
+				var v:Dynamic = Reflect.field(hero, f);
+				if (v == null) {
+					var g:Dynamic = Reflect.field(hero, "get_" + f);
+					if (g != null && Reflect.isFunction(g)) v = Reflect.callMethod(hero, g, []);
+				}
+				if (Std.isOfType(v, Bool)) {
+					if (!combatPathLogged) { combatPathLogged = true; trace("combat: using hero." + f); }
+					return cast v;
+				}
+				if (v != null && Reflect.isFunction(v)) {
+					var r:Dynamic = Reflect.callMethod(hero, v, []);
+					if (Std.isOfType(r, Bool)) {
+						if (!combatPathLogged) { combatPathLogged = true; trace("combat: using hero." + f + "()"); }
+						return cast r;
+					}
+				}
+			} catch (_:Dynamic) {}
+		}
+		return null;
+	}
+
+	static function readHp(o:Dynamic):Float {
+		for (f in ["hp", "health", "life"]) {
+			try {
+				var v:Dynamic = Reflect.field(o, f);
+				if (Std.isOfType(v, Float) || Std.isOfType(v, Int)) return cast v;
+			} catch (_:Dynamic) {}
+		}
+		return -1;
+	}
+
+	// fallback when the game flag can't be read: recent casts or hp DROPS
+	// count as activity (regen/raises are ignored so out-of-combat heals
+	// don't keep the fight "alive")
+	static function pollActivity():Void {
+		var now = haxe.Timer.stamp();
+		var hero = getHero();
+		if (hero == null) return;
+		var hp = readHp(hero);
+		if (hp >= 0) {
+			if (lastHeroHp >= 0 && hp < lastHeroHp) lastActivityAt = now;
+			lastHeroHp = hp;
+		}
+		var t = getMarkTarget();
+		if (t != null) {
+			var thp = readHp(t);
+			if (thp >= 0) {
+				if (lastTgtHp >= 0 && thp < lastTgtHp) lastActivityAt = now;
+				lastTgtHp = thp;
+			}
+		} else lastTgtHp = -1;
 	}
 
 	// what advanceAndCast would actually cast right now (priority pass first)
@@ -856,12 +1014,15 @@ class Main {
 		for (n in 0...walkLen) {
 			var idx = (c + n) % len;
 			var kind = config.steps[idx];
+			if (gateReason(kind) != null) continue;
 			var sk = skillOf(kind);
 			if (sk != null && effOf(sk) != null && knivesOut() && windowOpen(kind, sk)) return idx;
 		}
 		for (n in 0...walkLen) {
 			var idx = (c + n) % len;
-			if (isReady(config.steps[idx])) return idx;
+			var kind = config.steps[idx];
+			if (gateReason(kind) != null) continue;
+			if (isReady(kind)) return idx;
 		}
 		return -1;
 	}
@@ -881,6 +1042,7 @@ class Main {
 		for (n in 0...walkLen) {
 			var idx = (cursor + n) % len;
 			var kind = config.steps[idx];
+			if (gateReason(kind) != null) continue;
 			var skP = skillOf(kind);
 			if (skP != null && effOf(skP) != null && windowOpen(kind, skP)) {
 				if (tryCast(kind)) {
@@ -897,6 +1059,7 @@ class Main {
 		for (n in 0...walkLen) {
 			var idx = (cursor + n) % len;
 			var kind = config.steps[idx];
+			if (gateReason(kind) != null) continue;
 			if (isReady(kind)) {
 				if (tryCast(kind)) {
 					trace("cast " + kind + " at " + idx);
@@ -918,6 +1081,11 @@ class Main {
 		}
 		if (strictOn()) {
 			var k = config.steps[cursor];
+			var gr = gateReason(k);
+			if (gr != null) {
+				trace("strict: hold step " + (cursor + 1) + "/" + len + " " + k + " - " + gr);
+				return;
+			}
 			var cd = cooldownOf(k);
 			var cdS = cd == -1 ? "not found" : cd == -2 ? "cd unknown" : Std.string(Math.round(cd * 10) / 10) + "s";
 			trace("strict: hold step " + (cursor + 1) + "/" + len + " " + k + " cd=" + cdS + (isReady(k) ? " ready but rejected" : ""));
@@ -1365,6 +1533,14 @@ class Main {
 			ImGui.sameLine();
 			ImGui.textDisabled("each press = current step only, never skips ahead");
 
+			var pm = new BoolRef(plungeGateOn());
+			if (ImGui.checkbox("Plunge needs Chaos Mark", pm)) {
+				config.plungeNeedsMark = pm.get();
+				config.save();
+			}
+			ImGui.sameLine();
+			ImGui.textDisabled("hold Infernal Plunge until the target is marked");
+
 			ImGui.text(strictOn() ? "Sequence (order enforced):" : "Sequence (priority order):");
 
 			var removeIdx = -1;
@@ -1480,6 +1656,19 @@ class Main {
 		try {
 			if (!isHotkeyMode()) probe();
 			dumpShootApi();
+			// combat end -> back to step 1 (fresh combo for the next fight)
+			var flag = combatFlag();
+			var cb:Bool;
+			if (flag != null) cb = flag;
+			else {
+				pollActivity();
+				cb = haxe.Timer.stamp() - lastActivityAt < 4.0;
+			}
+			if (combatWas && !cb && cursor != 0) {
+				trace("combat end: cursor reset " + cursor + " -> 0");
+				cursor = 0;
+			}
+			combatWas = cb;
 			if (!isHotkeyMode() && !statusLogged && probed && config.steps.length > 0) {
 				statusLogged = true;
 				var seen = new Map<String, Bool>();

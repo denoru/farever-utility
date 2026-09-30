@@ -9,6 +9,11 @@ Reference: https://www.curseforge.com/wow/addons/gse-gnome-sequencer-enhanced-ad
 
 - Editable sequence of skills (ordered list, add/remove/reorder), saved between sessions
 - Press the bound key → next castable skill in the sequence fires
+- **Combat-end cursor reset**: leaving combat (unit `isInCombat` flag, activity
+  fallback) resets the cursor to step 1 automatically
+- **Infernal Plunge gate**: `Daggers_Demondash_Skill1` only casts while the target
+  carries Chaos Mark (`Daggers_Demondash_Mark` / any "chaos" status on the target
+  unit's `statuses`) — toggle "Plunge needs Chaos Mark" to disable
 - Sequence semantics (Q3 below): **Strict order (default ON)** — each press casts only
   the current step and holds if it's not ready/rejected, so fast mashing never breaks
   the combo order. Toggle "Strict order" off to restore the old priority walk
