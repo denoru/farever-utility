@@ -1,0 +1,5 @@
+-cp src
+-cp C:/Users/Deniz/AppData/Local/Temp/opencode/hlx-core/hlx-runtime/src
+-cp C:/Users/Deniz/Desktop/Farever Addon/farever-mods/imgui/hl-imgui/src
+-main Main
+-hl bin/cast-sequence.hl

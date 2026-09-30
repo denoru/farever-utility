@@ -1,0 +1,22 @@
+{
+  "name": "farever-cast-sequence",
+  "displayName": "Cast Sequence",
+  "description": "Single-key skill sequencer: casts the skill shown in the HUD slot, skips to next ready step, resets after a full loop.",
+  "version": "0.1.0",
+  "author": "Denoru",
+  "license": "MIT",
+  "game": "farever",
+  "steamAppId": 3672400,
+  "hlxMod": true,
+  "modType": "hlx",
+  "runtime": "hlmod",
+  "main": "src/Main.hx",
+  "scripts": {
+    "compile": "haxe compile.hxml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/denoru/farever-utility"
+  },
+  "keywords": ["farever", "mod", "hlx", "cast-sequence", "sequencer", "rotation"]
+}
