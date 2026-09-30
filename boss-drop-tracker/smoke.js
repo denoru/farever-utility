@@ -269,6 +269,55 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('toolbar restored:', !d.querySelector('.toolbar').classList.contains('mkt'),
     '| boss cards back:', d.querySelectorAll('#view .boss-card').length);
 
+  console.log('--- i18n + database ---');
+  console.log('items loaded:', !!(w.FAREVER_ITEMS && w.FAREVER_ITEMS.items && w.FAREVER_ITEMS.items.length),
+    '| count:', w.FAREVER_ITEMS && w.FAREVER_ITEMS.count,
+    '| i18n loaded:', !!(w.FAREVER_I18N && w.FAREVER_I18N.units && Object.keys(w.FAREVER_I18N.units).length));
+
+  d.querySelector('.tabs button[data-tab="database"]').click();
+  await wait(200);
+  console.log('db toolbar mode:', d.querySelector('.toolbar').classList.contains('db'),
+    '| db cards:', d.querySelectorAll('#view .db-card').length,
+    '| db note:', (d.querySelector('.db-note') || {}).textContent);
+  console.log('db rarity options:', d.getElementById('db-rarity').options.length);
+
+  const mountChipDb = [...d.querySelectorAll('#chips .chip')].find((c) => c.textContent === 'Mounts');
+  mountChipDb.click();
+  await wait(120);
+  console.log('db mount cards:', d.querySelectorAll('#view .db-card').length);
+  const allChipDb = [...d.querySelectorAll('#chips .chip')].find((c) => c.textContent === 'All');
+  allChipDb.click();
+  await wait(120);
+  console.log('db all cards:', d.querySelectorAll('#view .db-card').length);
+
+  const langSel = d.getElementById('lang');
+  langSel.value = 'pt';
+  langSel.dispatchEvent(new w.Event('change'));
+  await wait(200);
+  console.log('pt chips have Montarias:',
+    [...d.querySelectorAll('#chips .chip')].map((c) => c.textContent).includes('Montarias'),
+    '| html lang:', d.documentElement.lang);
+
+  d.querySelector('.tabs button[data-tab="bosses"]').click();
+  await wait(60);
+  const hideBox = d.getElementById('hideOwned');
+  hideBox.checked = false;
+  hideBox.dispatchEvent(new w.Event('change'));
+  const allChip = d.querySelector('#chips .chip[data-cat="all"]');
+  if (allChip) allChip.click();
+  await wait(150);
+  const ptNames = [...d.querySelectorAll('#view .boss-card .name')].map((n) => n.textContent);
+  console.log('pt boss name Rei Ratossar:', ptNames.includes('Rei Ratossar'),
+    '| sample:', ptNames.slice(0, 3).join(', '));
+
+  langSel.value = 'en';
+  langSel.dispatchEvent(new w.Event('change'));
+  await wait(200);
+  const enNames = [...d.querySelectorAll('#view .boss-card .name')].map((n) => n.textContent);
+  console.log('en restored:', d.documentElement.lang === 'en',
+    '| King Ratsar back:', enNames.includes('King Ratsar'),
+    '| chips English:', [...d.querySelectorAll('#chips .chip')].map((c) => c.textContent).includes('Mounts'));
+
   console.log('errors:', errors.length ? errors : 'none');
   w.close();
   server.close();
