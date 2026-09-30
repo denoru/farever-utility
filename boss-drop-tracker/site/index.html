@@ -247,6 +247,19 @@
   .mkt-region.active[data-r="CN"] { background: #ff6b6b; border-color: #ff6b6b; }
   .mkt-region-full { font-size: 12px; color: var(--muted); }
   .mkt-kinds { display: flex; gap: 6px; }
+  .mkt-cols { display: flex; gap: 12px; width: 100%; flex-wrap: wrap; }
+  .mkt-col {
+    flex: 1 1 300px; min-width: 258px; display: flex; flex-direction: column; gap: 9px;
+    padding: 11px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2);
+  }
+  .mkt-col.have { border-color: #2f6b4b; background: linear-gradient(180deg, #121b16, var(--panel-2)); }
+  .mkt-col.want { border-color: #235a70; background: linear-gradient(180deg, #0c1a21, var(--panel-2)); }
+  .mkt-col-head {
+    align-self: flex-start; font-size: 12px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; padding: 4px 13px; border-radius: 999px; border: 1px solid;
+  }
+  .mkt-col-head.have { color: var(--ok); border-color: #2f6b4b; background: #14201a; }
+  .mkt-col-head.want { color: var(--glider); border-color: #235a70; background: #0d1c22; }
   .mkt-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; width: 100%; }
   .mkt-add-row select.search { flex: 1 1 150px; min-width: 128px; cursor: pointer; }
   .mkt-pick-custom { flex: 2 1 200px; }
@@ -333,6 +346,9 @@
   .mkt-rep.pos { color: var(--ok); border-color: #2f6b4b; }
   .mkt-rep.neg { color: #ff6b6b; border-color: #7a2e2e; }
   .mkt-rep.zero { color: var(--muted); }
+  .mkt-star { color: var(--gold); font-size: 12px; margin-right: 3px; }
+  .mkt-rep.zero .mkt-star { color: var(--muted); }
+  .mkt-rep.neg .mkt-star { color: #ff6b6b; }
   .mkt-contact { margin-left: auto; font-size: 12px; white-space: nowrap; }
   .mkt-listing-foot {
     display: flex; justify-content: space-between; align-items: center; gap: 8px;
@@ -358,6 +374,7 @@
   .mkt-modal-head { display: flex; gap: 12px; align-items: center; padding-right: 14px; }
   .mkt-rep-big { margin-left: auto; text-align: right; font-size: 23px; font-weight: 700; }
   .mkt-rep-big span { display: block; font-size: 10.5px; font-weight: 400; color: var(--muted); }
+  .mkt-rep-big .mkt-star { display: inline; font-size: 17px; font-weight: 700; margin-right: 3px; }
   .mkt-rep-big.pos { color: var(--ok); }
   .mkt-rep-big.neg { color: #ff6b6b; }
   .mkt-rep-big.zero { color: var(--muted); }
@@ -969,7 +986,10 @@
       session: null, profiles: [], announcements: [], feedback: [],
       kind: 'all', showClosed: false,
       pool: [], note: '',
-      pick: { kind: 'have', cat: 'all', item: '', rarity: 'auto', custom: '' },
+      pick: {
+        have: { cat: 'all', item: '', rarity: 'auto', custom: '' },
+        want: { cat: 'all', item: '', rarity: 'auto', custom: '' }
+      },
       modal: null
     };
     window.__fareverMarket = market; // debug hook for smoke.js
@@ -1244,8 +1264,10 @@
     function mkRepBadge(steamId) {
       var r = repOf(steamId);
       var cls = r.sum > 0 ? 'pos' : (r.sum < 0 ? 'neg' : 'zero');
+      var star = r.sum > 0 ? '✦' : '✧';
       return '<button class="mkt-rep ' + cls + '" data-mkt="profile" data-steam="' + esc(steamId) +
         '" title="' + esc(t('repTitle', { s: r.sum, n: r.n })) + '">' +
+        '<span class="mkt-star">' + star + '</span>' +
         (r.sum > 0 ? '+' : '') + r.sum + '</button>';
     }
 
@@ -1272,13 +1294,13 @@
       return dbItems.filter(function (i) { return cats.indexOf(i.cat) !== -1; });
     }
 
-    function pickOption(it) {
-      return '<option value="' + esc(it.id) + '"' + (market.pick.item === it.id ? ' selected' : '') + '>' +
+    function pickOption(it, kind) {
+      return '<option value="' + esc(it.id) + '"' + (market.pick[kind].item === it.id ? ' selected' : '') + '>' +
         esc(iName(it.id, it.en.n)) + (it.rarity ? ' · ' + esc(rName(it.rarity)) : '') + '</option>';
     }
 
-    function pickOptions() {
-      var cat = market.pick.cat;
+    function pickOptions(kind) {
+      var cat = market.pick[kind].cat;
       var groups = [];
       if (cat === 'all') {
         groups = ['weapon', 'equipment', 'mount', 'glider'].map(function (c) { return [c, dbForMktCat(c)]; });
@@ -1288,17 +1310,21 @@
       var html = '';
       groups.forEach(function (g) {
         if (!g[1].length) return;
-        html += '<optgroup label="' + esc(mktCatLabel(g[0])) + '">' + g[1].map(pickOption).join('') + '</optgroup>';
+        html += '<optgroup label="' + esc(mktCatLabel(g[0])) + '">' +
+          g[1].map(function (x) { return pickOption(x, kind); }).join('') + '</optgroup>';
       });
       if (!html) html = '<option value="">' + esc(t('noItemsCat')) + '</option>';
       return html;
     }
 
-    function poolHtml() {
-      if (!market.pool.length)
+    function poolHtml(kind) {
+      var rows = [];
+      market.pool.forEach(function (it, idx) { if (it.kind === kind) rows.push([it, idx]); });
+      if (!rows.length)
         return '<div class="mkt-pool-empty">' + esc(t('poolEmpty')) + '</div>';
       var html = '<div class="mkt-pool">';
-      market.pool.forEach(function (it, idx) {
+      rows.forEach(function (pair) {
+        var it = pair[0], idx = pair[1];
         html += '<div class="mkt-pool-row">' +
           '<span class="badge mkt-kind ' + esc(it.kind) + '">' +
             esc(t(it.kind === 'have' ? 'kind_have' : 'kind_want')) + '</span>' +
@@ -1312,42 +1338,29 @@
       return html + '</div>';
     }
 
-    function composeHtml() {
-      var r = myRegion();
-      var html = '<div class="mkt-compose">';
-      html += '<div class="mkt-region-row">' +
-        '<span class="mkt-region-label">' + esc(r ? t('yourRegion') : t('yourRegionReq')) + '</span>';
-      REGIONS.forEach(function (code) {
-        html += '<button type="button" class="chip mkt-region' + (r === code ? ' active' : '') +
-          '" data-mkt="setregion" data-val="' + code + '" data-r="' + code + '" title="' +
-          esc(regionTitle(code)) + '">' + code + '</button>';
-      });
-      if (r) html += '<span class="mkt-region-full">' + esc(regionTitle(r)) + '</span>';
-      html += '</div>';
-      html += '<div class="mkt-add-row">' +
-        '<div class="mkt-kinds">' +
-          '<button type="button" class="chip' + (market.pick.kind === 'have' ? ' active' : '') +
-            '" data-mkt="pickkind" data-val="have">' + esc(t('kind_have')) + '</button>' +
-          '<button type="button" class="chip' + (market.pick.kind === 'want' ? ' active' : '') +
-            '" data-mkt="pickkind" data-val="want">' + esc(t('kind_want')) + '</button>' +
-        '</div>' +
-        '<select class="search" id="pick-cat" title="Category">';
+    function composeCol(kind) {
+      var pk = market.pick[kind];
+      var labelKey = kind === 'have' ? 'kind_have' : 'kind_want';
+      var html = '<div class="mkt-col ' + kind + '">' +
+        '<div class="mkt-col-head ' + kind + '">' + esc(t(labelKey)) + '</div>' +
+        '<div class="mkt-add-row">';
+      html += '<select class="search" id="pick-cat-' + kind + '" title="Category">';
       MKT_CATS.forEach(function (c) {
-        html += '<option value="' + c + '"' + (market.pick.cat === c ? ' selected' : '') + '>' +
+        html += '<option value="' + c + '"' + (pk.cat === c ? ' selected' : '') + '>' +
           esc(mktCatLabel(c)) + '</option>';
       });
       html += '</select>';
-      if (market.pick.cat === 'equipment') {
-        html += '<input class="search mkt-pick-custom" id="pick-custom" maxlength="100"' +
-          ' placeholder="' + esc(t('pickCustomPh')) + '" value="' + esc(market.pick.custom) + '">';
+      if (pk.cat === 'equipment') {
+        html += '<input class="search mkt-pick-custom" id="pick-custom-' + kind + '" maxlength="100"' +
+          ' placeholder="' + esc(t('pickCustomPh')) + '" value="' + esc(pk.custom) + '">';
       } else {
-        html += '<select class="search" id="pick-item" title="Item">' +
-          '<option value=""' + (market.pick.item ? '' : ' selected') + '>' + esc(t('pickItem')) + '</option>' +
-          pickOptions() + '</select>';
+        html += '<select class="search" id="pick-item-' + kind + '" title="Item">' +
+          '<option value=""' + (pk.item ? '' : ' selected') + '>' + esc(t('pickItem')) + '</option>' +
+          pickOptions(kind) + '</select>';
       }
-      var rarCap = RARITY_CAP[market.pick.cat];
-      var rarCur = market.pick.rarity;
-      html += '<select class="search mkt-pick-rar" id="pick-rarity" title="Rarity">';
+      var rarCap = RARITY_CAP[pk.cat];
+      var rarCur = pk.rarity;
+      html += '<select class="search mkt-pick-rar" id="pick-rarity-' + kind + '" title="Rarity">';
       if (rarCap) {
         if (rarCap.length > 1) {
           html += '<option value=""' + (rarCur === '' ? ' selected' : '') + '>' + esc(t('rarityOptional')) + '</option>';
@@ -1364,10 +1377,26 @@
         });
       }
       html += '</select>' +
-        '<button type="button" class="own-btn mkt-add" data-mkt="additem"' +
+        '<button type="button" class="own-btn mkt-add" data-mkt="additem" data-kind="' + kind + '"' +
           (market.busy ? ' disabled' : '') + '>' + esc(t('add')) + '</button>' +
       '</div>';
-      html += poolHtml();
+      html += poolHtml(kind);
+      return html + '</div>';
+    }
+
+    function composeHtml() {
+      var r = myRegion();
+      var html = '<div class="mkt-compose">';
+      html += '<div class="mkt-region-row">' +
+        '<span class="mkt-region-label">' + esc(r ? t('yourRegion') : t('yourRegionReq')) + '</span>';
+      REGIONS.forEach(function (code) {
+        html += '<button type="button" class="chip mkt-region' + (r === code ? ' active' : '') +
+          '" data-mkt="setregion" data-val="' + code + '" data-r="' + code + '" title="' +
+          esc(regionTitle(code)) + '">' + code + '</button>';
+      });
+      if (r) html += '<span class="mkt-region-full">' + esc(regionTitle(r)) + '</span>';
+      html += '</div>';
+      html += '<div class="mkt-cols">' + composeCol('have') + composeCol('want') + '</div>';
       html += '<input class="search mkt-note-field" id="mkt-note" maxlength="500"' +
           ' placeholder="' + esc(t('notePh')) + '" value="' + esc(market.note) + '">' +
         '<button type="button" class="own-btn mkt-post" data-mkt="post"' + (market.busy ? ' disabled' : '') + '>' +
@@ -1472,6 +1501,7 @@
               ' <button class="ghost mkt-copy" data-mkt="copyid" data-steam="' + esc(steamId) + '">' + esc(t('copyId')) + '</button></div>' +
             '</div>' +
             '<div class="mkt-rep-big ' + (r.sum > 0 ? 'pos' : r.sum < 0 ? 'neg' : 'zero') + '">' +
+              '<span class="mkt-star">' + (r.sum > 0 ? '✦' : '✧') + '</span>' +
               (r.sum > 0 ? '+' : '') + r.sum + '<span>' + esc(t('feedbackN', { n: r.n })) + '</span></div>' +
           '</div>' +
           '<div class="mkt-fb-list">' + (list || '<div class="mkt-muted">' + esc(t('noFeedback')) + '</div>') + '</div>' +
@@ -1531,15 +1561,17 @@
 
     function captureCompose() {
       var n = document.getElementById('mkt-note');
-      var c = document.getElementById('pick-cat');
-      var i = document.getElementById('pick-item');
-      var x = document.getElementById('pick-custom');
-      var r = document.getElementById('pick-rarity');
       if (n) market.note = n.value;
-      if (c) market.pick.cat = c.value;
-      if (i) market.pick.item = i.value;
-      if (x) market.pick.custom = x.value;
-      if (r) market.pick.rarity = r.value;
+      ['have', 'want'].forEach(function (kind) {
+        var c = document.getElementById('pick-cat-' + kind);
+        var i = document.getElementById('pick-item-' + kind);
+        var x = document.getElementById('pick-custom-' + kind);
+        var r = document.getElementById('pick-rarity-' + kind);
+        if (c) market.pick[kind].cat = c.value;
+        if (i) market.pick[kind].item = i.value;
+        if (x) market.pick[kind].custom = x.value;
+        if (r) market.pick[kind].rarity = r.value;
+      });
     }
 
     function setRegion(code) {
@@ -1567,8 +1599,9 @@
       });
     }
 
-    function addPoolItem() {
-      var p = market.pick;
+    function addPoolItem(kind) {
+      kind = kind === 'want' ? 'want' : 'have';
+      var p = market.pick[kind];
       if (market.pool.length >= 20) {
         market.error = t('errPool20');
         render();
@@ -1579,7 +1612,7 @@
       if (p.cat === 'equipment') {
         var nm = p.custom.trim();
         if (!nm) { market.error = t('errTypeName'); render(); return; }
-        entry = { kind: p.kind, item_id: null, item_name: nm.slice(0, 100),
+        entry = { kind: kind, item_id: null, item_name: nm.slice(0, 100),
           rarity: cap.indexOf(p.rarity) >= 0 ? p.rarity : null };
       } else {
         var it = p.item ? itemsById[p.item] : null;
@@ -1590,12 +1623,12 @@
         else if (p.rarity && p.rarity !== 'auto') rar = p.rarity;
         else rar = it.rarity || null;
         var nm2 = itemsById[p.item].db ? iName(p.item, it.name) : it.name;
-        entry = { kind: p.kind, item_id: it.itemId, item_name: nm2.slice(0, 100), rarity: rar };
+        entry = { kind: kind, item_id: it.itemId, item_name: nm2.slice(0, 100), rarity: rar };
       }
       market.pool.push(entry);
-      market.pick.item = '';
-      market.pick.custom = '';
-      market.pick.rarity = defaultRarity(p.cat);
+      market.pick[kind].item = '';
+      market.pick[kind].custom = '';
+      market.pick[kind].rarity = defaultRarity(p.cat);
       market.error = '';
       render();
     }
@@ -1618,7 +1651,10 @@
       }).then(function (rows) {
         market.pool = [];
         market.note = '';
-        market.pick = { kind: 'have', cat: 'all', item: '', rarity: 'auto', custom: '' };
+        market.pick = {
+          have: { cat: 'all', item: '', rarity: 'auto', custom: '' },
+          want: { cat: 'all', item: '', rarity: 'auto', custom: '' }
+        };
         if (rows && rows[0]) market.announcements.unshift(rows[0]);
         market.busy = false;
         render();
@@ -1705,12 +1741,6 @@
         return;
       }
       if (act === 'clearerr') { market.error = ''; render(); return; }
-      if (act === 'pickkind') {
-        captureCompose();
-        market.pick.kind = el.getAttribute('data-val');
-        render();
-        return;
-      }
       if (act === 'setregion') {
         captureCompose();
         setRegion(el.getAttribute('data-val'));
@@ -1718,7 +1748,7 @@
       }
       if (act === 'additem') {
         captureCompose();
-        addPoolItem();
+        addPoolItem(el.getAttribute('data-kind'));
         return;
       }
       if (act === 'rmitem') {
@@ -1951,30 +1981,34 @@
         if (!m || !m.getAttribute) return;
         var id = m.id;
         if (id === 'mkt-note') { market.note = m.value; return; }
-        if (id === 'pick-custom') { market.pick.custom = m.value; return; }
-        if (id === 'pick-rarity') { market.pick.rarity = m.value; return; }
-        if (id === 'pick-item') {
-          market.pick.item = m.value;
+        var pm = id.match(/^pick-(cat|item|custom|rarity)-(have|want)$/);
+        if (!pm) return;
+        var field = pm[1], kind = pm[2];
+        var pk = market.pick[kind];
+        if (field === 'custom') { pk.custom = m.value; return; }
+        if (field === 'rarity') { pk.rarity = m.value; return; }
+        if (field === 'item') {
+          pk.item = m.value;
           var pit = itemsById[m.value];
           if (pit && pit.rarity) {
-            var pitCap = RARITY_CAP[market.pick.cat];
+            var pitCap = RARITY_CAP[pk.cat];
             if (!pitCap || pitCap.indexOf(pit.rarity) >= 0) {
-              market.pick.rarity = pit.rarity;
-              var rr = document.getElementById('pick-rarity');
+              pk.rarity = pit.rarity;
+              var rr = document.getElementById('pick-rarity-' + kind);
               if (rr) rr.value = pit.rarity;
             }
           }
           return;
         }
-        if (id === 'pick-cat') {
-          if (market.pick.cat === m.value) return;
+        if (field === 'cat') {
+          if (pk.cat === m.value) return;
           captureCompose();
-          market.pick.cat = m.value;
-          market.pick.item = '';
-          market.pick.custom = '';
-          market.pick.rarity = defaultRarity(m.value);
+          pk.cat = m.value;
+          pk.item = '';
+          pk.custom = '';
+          pk.rarity = defaultRarity(m.value);
           render();
-          var focusEl = document.getElementById(m.value === 'equipment' ? 'pick-custom' : 'pick-item');
+          var focusEl = document.getElementById(m.value === 'equipment' ? 'pick-custom-' + kind : 'pick-item-' + kind);
           if (focusEl && focusEl.focus) focusEl.focus();
           return;
         }
