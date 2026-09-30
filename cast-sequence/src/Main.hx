@@ -16,6 +16,7 @@ typedef CastSequenceConfig = {
 	var mode:String;
 	var hotkeys:String;
 	var stepDelayMs:Int;
+	var strictOrder:Bool;
 }
 
 @:build(hlx.runtime.Mod.build())
@@ -44,7 +45,8 @@ class Main {
 		steps: [],
 		mode: "skill",
 		hotkeys: DEFAULT_HOTKEYS,
-		stepDelayMs: 300
+		stepDelayMs: 300,
+		strictOrder: true
 	};
 
 	static var lastHotkeyAt:Float = 0;
@@ -53,6 +55,12 @@ class Main {
 		var v:Null<Int> = config.stepDelayMs;
 		if (v == null) return 300;
 		return v < 0 ? 0 : v;
+	}
+
+	// strict order: each trigger press casts ONLY the cursor step and never
+	// skips ahead; a missing saved value counts as ON
+	static function strictOn():Bool {
+		return config.strictOrder != false;
 	}
 
 	static var hkBuf:hl.Bytes = null;
@@ -844,13 +852,14 @@ class Main {
 		var len = config.steps.length;
 		if (len == 0) return -1;
 		var c = cursor >= len ? 0 : cursor;
-		for (n in 0...len) {
+		var walkLen = strictOn() ? 1 : len;
+		for (n in 0...walkLen) {
 			var idx = (c + n) % len;
 			var kind = config.steps[idx];
 			var sk = skillOf(kind);
 			if (sk != null && effOf(sk) != null && knivesOut() && windowOpen(kind, sk)) return idx;
 		}
-		for (n in 0...len) {
+		for (n in 0...walkLen) {
 			var idx = (c + n) % len;
 			if (isReady(config.steps[idx])) return idx;
 		}
@@ -864,9 +873,12 @@ class Main {
 		if (len == 0) return;
 		dumpSlots("trigger");
 		if (cursor >= len) cursor = 0;
+		// strict order: try ONLY the cursor step — mashing the trigger can
+		// never skip a not-ready/rejected step or wrap out of sequence
+		var walkLen = strictOn() ? 1 : len;
 		// charge-window skills (Void Fangs knives) jump the queue while charges last:
 		// CD says not-ready, but charges keep it throwable until the window expires
-		for (n in 0...len) {
+		for (n in 0...walkLen) {
 			var idx = (cursor + n) % len;
 			var kind = config.steps[idx];
 			var skP = skillOf(kind);
@@ -882,7 +894,7 @@ class Main {
 				// bogus window (e.g. _Shoot step's always-self effOf, no knives): fall through
 			}
 		}
-		for (n in 0...len) {
+		for (n in 0...walkLen) {
 			var idx = (cursor + n) % len;
 			var kind = config.steps[idx];
 			if (isReady(kind)) {
@@ -903,6 +915,13 @@ class Main {
 				// ready-looking step that can't actually cast (e.g. _Shoot with no
 				// knives): keep walking so other ready steps still fire this press
 			}
+		}
+		if (strictOn()) {
+			var k = config.steps[cursor];
+			var cd = cooldownOf(k);
+			var cdS = cd == -1 ? "not found" : cd == -2 ? "cd unknown" : Std.string(Math.round(cd * 10) / 10) + "s";
+			trace("strict: hold step " + (cursor + 1) + "/" + len + " " + k + " cd=" + cdS + (isReady(k) ? " ready but rejected" : ""));
+			return;
 		}
 		var sum = [];
 		for (kind in config.steps) {
@@ -1299,7 +1318,7 @@ class Main {
 				config.save();
 			}
 			ImGui.sameLine();
-			ImGui.textDisabled(hkMode ? "trigger = press next key / mouse button in sequence" : "trigger = cast the next ready skill");
+			ImGui.textDisabled(hkMode ? "trigger = press next key / mouse button in sequence" : (strictOn() ? "trigger = cast the current step (strict order)" : "trigger = cast the next ready skill"));
 
 			if (hkMode) {
 				ImGui.text("Sequence (keys separated by >):");
@@ -1338,7 +1357,15 @@ class Main {
 					ImGui.popID();
 				}
 			} else {
-			ImGui.text("Sequence (priority order):");
+			var so = new BoolRef(strictOn());
+			if (ImGui.checkbox("Strict order", so)) {
+				config.strictOrder = so.get();
+				config.save();
+			}
+			ImGui.sameLine();
+			ImGui.textDisabled("each press = current step only, never skips ahead");
+
+			ImGui.text(strictOn() ? "Sequence (order enforced):" : "Sequence (priority order):");
 
 			var removeIdx = -1;
 			for (i in 0...config.steps.length) {
