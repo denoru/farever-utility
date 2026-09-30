@@ -103,6 +103,88 @@ is a different origin → empty storage.
 - Scratch probes (`probe.js`, `diag.js`, `debug.js`, `rarity-check.js`) were deleted; recreate
   the same way if needed.
 
+## Market (community notice board)
+
+**Scope decision (user-confirmed):** no trades happen *on* the platform — it is a
+notice board where players announce what they **have** / what they **want**, then
+contact each other on Steam. Copy must stay announcement-flavored ("announcement",
+"closed", "Contact on Steam"); never imply on-site trading, escrow or payments.
+
+### Files
+
+| File | Purpose |
+|---|---|
+| `supabase/market.sql` | Schema + RLS. Idempotent, run in the Supabase SQL editor (safe to re-run on schema updates — v2 migrated `listings` → `announcements` and added `profiles.region`). |
+| `supabase/functions/steam-auth/index.ts` | Edge function: Steam OpenID verification → Supabase session. Pure fetch, no npm imports (paste-safe in dashboard). |
+| `supabase/SETUP.md` | Step-by-step dashboard walkthrough (account → SQL → function → secret → keys). |
+| `data/market-config.js` | `{url, anon}` — public Supabase values, loaded before the main script, copied into `site/` by `build-site.js`. Empty = market shows "not configured" state. |
+
+### Architecture
+
+- Site stays **static** (Netlify Drop unchanged). Browser talks to Supabase REST
+  directly with a hand-rolled supabase-lite wrapper (`sbQuery`, `mkEnsureAuth`) —
+  no supabase-js dependency, so no CDN and `file://` still boots.
+- **Login:** browser → steamcommunity.com OpenID → back to `index.html?openid.*`
+  (+ `mkt_state` in return_to for CSRF check) → POST all `openid.*` params to
+  `steam-auth` → function validates signature (`check_authentication`), pulls
+  name/avatar from `profiles/<id>?xml=1` (no API key needed), derives
+  `email = steam_<id64>@steam.farever.market` + password =
+  `HMAC-SHA256(STEAM_AUTH_SECRET, id64)` → GoTrue create/sign-in → upserts
+  `profiles` (service role) → returns tokens. Session persisted in
+  `fareverMarket.session.v1`, auto-refreshed 60 s before expiry.
+  **Changing STEAM_AUTH_SECRET locks all existing users out** (documented in SETUP).
+- **Tables:** `profiles` (steam_id PK, user_id unique → auth.users, `region`
+  NA/SA/EU/AS/CN chosen right after sign-in, check-constrained), `announcements`
+  (multi-item: `items jsonb[1..20]` of `{kind have|want, item_id?, item_name,
+  rarity?}` — kind is per item so one post can mix have/want; `status`
+  active/closed; v2 SQL migrates+drops legacy single-item `listings`), `feedback`
+  (±1, `unique(from,to)` = one vote per pair,
+  `from <> to` check). Rep is **never stored** — summed from feedback at render
+  time, so there is no column to tamper with. Region lives on the profile only
+  (no per-announcement snapshot).
+- **RLS:** all reads public; writes only own rows via `auth_steam_id()`
+  (security-definer helper → no policy recursion). No report/admin features
+  (user chose only trade feedback ±1).
+- **UI:** third tab `Market` — hero + "Sign in with Steam" when signed out,
+  feed always visible (public read). Compose panel (v2): region chips
+  NA/SA/EU/AS/CN (required before posting, PATCHes `profiles.region`), item
+  picker row (I have/I want chips, category select **All/Weapons/Equipment/
+  Mounts/Gliders** — no Legendary/Custom/Other categories; item select with
+  optgroups for tracker categories, free-text name input for Equipment since
+  the tracker has no armor/necklace/ring drops; rarity select capped per game
+  rules: Mounts/Gliders locked to Epic, Equipment limited to Common..Rare,
+  Weapons (and All) offer the full ladder with auto-filled tracker rarity), the **pool list** (1..20 items per
+  announcement, remove per row), note, "Post announcement". Announcement cards
+  show every item row (kind badge + icon + name + rarity), have/want counts,
+  poster's region badge, filters (All/Have/Want = contains an item of that
+  kind, Show closed), per-announcement "Contact on Steam"; own posts get
+  Mark done/Relist/Delete; rep badge opens profile modal with feedback list +
+  ±1 form (upsert on `on_conflict=from,to`). Toolbar switches to `.mkt` mode:
+  chips/hide-owned/reset hidden, main search reused for announcements
+  (`Search announcements…`, matches item names/note/seller).
+- Integration points in `index.html`: `render()` market branch, view
+  click listener routes to `marketClick`, shared `viewInput` on `input`+`change`
+  events (market compose branch: `mkt-note`/`pick-cat`/`pick-item`/`pick-rarity`/
+  `pick-custom`), tab click calls `marketInit()`, boot ends with
+  `handleOpenIdReturn()`. `window.__fareverMarket` is a debug hook used by
+  smoke.js to inject synthetic feeds.
+
+### Gotchas
+
+- Steam login needs http(s): `file://` shows an explanatory error — serve
+  (`npx serve .`) or use deployed URL. localhost works as return_to.
+- Dashboard API page may show `sb_publishable_…` first — use the **legacy
+  `anon` `eyJ…` key** (it's a JWT; publishable keys fail JWT verification).
+  Function "Verify JWTs" ON or OFF both work (site always sends the anon key).
+- smoke.js covers the market tab in its *signed-out* state, then injects a fake
+  session (`fareverMarket.session.v1`) to exercise the compose panel (region
+  chips, category-capped pool add+remove with rarity-rule assertions, want
+  toggle) and a synthetic feed via
+  `window.__fareverMarket` to exercise announcement cards, region badges,
+  closed filter and have/want/search filtering — all offline (jsdom has no
+  usable `fetch`; failed loads only set the error box).
+- Feedback limit of one row per pair caps farming at +1 per distinct counterparty.
+
 ## Open ideas
 
 - Export / import buttons for the three localStorage blobs (backup across browsers).

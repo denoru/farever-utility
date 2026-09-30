@@ -178,6 +178,192 @@
   .empty { color: var(--muted); padding: 40px 0; text-align: center; }
   footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: center; }
   .legend-note { color: var(--muted); font-size: 12px; margin: -8px 0 14px; }
+
+  /* ---- market ---- */
+  .toolbar.mkt .chips, .toolbar.mkt .toggle, .toolbar.mkt #reset { display: none; }
+  .mkt-hero {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 30px 26px; display: flex; flex-direction: column; align-items: center;
+    gap: 12px; text-align: center; margin-bottom: 16px;
+  }
+  .mkt-hero-title { font-size: 21px; font-weight: 600; }
+  .mkt-hero-text { color: var(--muted); max-width: 560px; font-size: 13.5px; }
+  .mkt-steam-btn {
+    background: linear-gradient(180deg, #1b7ad6, #1667b5); color: #fff; border: 0;
+    border-radius: 10px; padding: 11px 26px; font: inherit; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 4px;
+  }
+  .mkt-steam-btn:hover { filter: brightness(1.1); }
+  .mkt-spin {
+    width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--line);
+    border-top-color: var(--gold); animation: mktspin .8s linear infinite;
+  }
+  @keyframes mktspin { to { transform: rotate(360deg); } }
+  .mkt-me {
+    display: flex; align-items: center; gap: 10px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 14px;
+  }
+  .mkt-me .ghost { margin-left: auto; }
+  .mkt-avatar {
+    width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: 0 0 auto;
+    background: #0c0a08; border: 1px solid var(--line);
+  }
+  span.mkt-avatar {
+    display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--muted);
+  }
+  .mkt-modal-head .mkt-avatar { width: 48px; height: 48px; font-size: 20px; }
+  .mkt-compose {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px; margin-bottom: 14px;
+  }
+  .mkt-region-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; }
+  .mkt-region-label { font-size: 12.5px; color: var(--muted); }
+  .mkt-region { font-weight: 700; letter-spacing: .5px; padding: 5px 11px; }
+  .mkt-region.active { color: #12100c; }
+  .mkt-region.active[data-r="NA"] { background: #5aa9ff; border-color: #5aa9ff; }
+  .mkt-region.active[data-r="SA"] { background: #7ed957; border-color: #7ed957; }
+  .mkt-region.active[data-r="EU"] { background: var(--gold); border-color: var(--gold); }
+  .mkt-region.active[data-r="AS"] { background: #c084fc; border-color: #c084fc; }
+  .mkt-region.active[data-r="CN"] { background: #ff6b6b; border-color: #ff6b6b; }
+  .mkt-region-full { font-size: 12px; color: var(--muted); }
+  .mkt-kinds { display: flex; gap: 6px; }
+  .mkt-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; width: 100%; }
+  .mkt-add-row select.search { flex: 1 1 150px; min-width: 128px; cursor: pointer; }
+  .mkt-pick-custom { flex: 2 1 200px; }
+  .mkt-add {
+    width: auto; margin-top: 0; padding: 8px 16px; font-weight: 600;
+    background: #191510; border-color: #6a5a37; color: var(--text);
+  }
+  .mkt-add:hover { border-color: var(--gold); color: var(--gold); }
+  .mkt-pool { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+  .mkt-pool-empty { width: 100%; font-size: 12.5px; color: var(--muted); font-style: italic; }
+  .mkt-pool-row {
+    display: flex; gap: 8px; align-items: center; background: #15110c;
+    border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px;
+  }
+  .mkt-pool-name {
+    font-size: 13px; font-weight: 600; flex: 1 1 auto; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mkt-pool-x {
+    margin-left: auto; background: none; border: 0; color: var(--muted);
+    cursor: pointer; font-size: 13px; font-family: inherit; padding: 2px 4px;
+  }
+  .mkt-pool-x:hover { color: #ff6b6b; }
+  .mkt-compose .mkt-note-field { flex: 1 1 100%; }
+  .mkt-post {
+    width: auto; margin-top: 0; padding: 8px 20px; font-weight: 600;
+    background: #191510; border-color: #6a5a37; color: var(--text);
+  }
+  .mkt-post:hover { border-color: var(--gold); color: var(--gold); }
+  .mkt-region-badge {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+    padding: 2px 6px; border-radius: 5px; border: 1px solid;
+  }
+  .mkt-region-badge[data-r="NA"] { color: #5aa9ff; border-color: #2f5c8a; background: #0d1a2a; }
+  .mkt-region-badge[data-r="SA"] { color: #7ed957; border-color: #3c7a34; background: #12200f; }
+  .mkt-region-badge[data-r="EU"] { color: var(--gold); border-color: #6a5a37; background: #1f1a11; }
+  .mkt-region-badge[data-r="AS"] { color: #c084fc; border-color: #6b3fa0; background: #1a0f2a; }
+  .mkt-region-badge[data-r="CN"] { color: #ff6b6b; border-color: #7a2e2e; background: #241111; }
+  .mkt-items { display: flex; flex-direction: column; gap: 3px; }
+  .mkt-item-row {
+    display: flex; gap: 8px; align-items: center; padding: 4px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .mkt-item-row:last-child { border-bottom: 0; }
+  .mkt-item-name {
+    font-size: 13px; font-weight: 600; flex: 1 1 auto; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mkt-item-row .dthumb, .mkt-pool-row .dthumb {
+    width: 24px; height: 24px; border-radius: 5px; background: #0c0a08;
+    border: 1px solid var(--line); display: grid; place-items: center;
+    overflow: hidden; flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--muted);
+  }
+  .mkt-item-row .dthumb img, .mkt-pool-row .dthumb img {
+    width: 100%; height: 100%; object-fit: contain;
+  }
+  .mkt-count-badge { color: var(--muted); border-color: var(--line); background: #191612; }
+  .mkt-filters {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .mkt-count { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .mkt-spacer { flex: 1; }
+  .mkt-error {
+    display: flex; gap: 10px; align-items: center; background: #241111;
+    border: 1px solid #7a2e2e; color: #ff9b9b; border-radius: 10px;
+    padding: 9px 12px; margin-bottom: 14px; font-size: 13px;
+  }
+  .mkt-error .ghost { margin-left: auto; }
+  .badge.mkt-kind.have { color: var(--ok); border-color: #2f6b4b; background: #14201a; }
+  .badge.mkt-kind.want { color: var(--glider); border-color: #235a70; background: #0d1c22; }
+  .badge.mkt-closed { color: #ff6b6b; border-color: #7a2e2e; background: #241111; }
+  .mkt-listing.closed { opacity: .6; }
+  .mkt-listing.closed .thumb { filter: grayscale(.7); }
+  .mkt-note-text { color: #cfc6b4; font-size: 13px; }
+  .mkt-seller { display: flex; gap: 8px; align-items: center; min-width: 0; }
+  .mkt-seller-name {
+    font-size: 13px; font-weight: 600; max-width: 150px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mkt-rep {
+    font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 7px; cursor: pointer;
+    background: #0d0b09; border: 1px solid var(--line); font-family: inherit;
+  }
+  .mkt-rep.pos { color: var(--ok); border-color: #2f6b4b; }
+  .mkt-rep.neg { color: #ff6b6b; border-color: #7a2e2e; }
+  .mkt-rep.zero { color: var(--muted); }
+  .mkt-contact { margin-left: auto; font-size: 12px; white-space: nowrap; }
+  .mkt-listing-foot {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    border-top: 1px dashed var(--line); padding-top: 8px;
+  }
+  .mkt-date { color: var(--muted); font-size: 11.5px; }
+  .mkt-own-actions { display: flex; gap: 6px; }
+  .mkt-own-actions .ghost { padding: 5px 10px; font-size: 12px; }
+  .mkt-modal-back {
+    position: fixed; inset: 0; background: rgba(5, 4, 3, .72); z-index: 30;
+    display: grid; place-items: center; padding: 18px;
+  }
+  .mkt-modal {
+    background: var(--panel-2); border: 1px solid #4a4133; border-radius: 14px;
+    width: min(440px, 100%); max-height: 86vh; overflow: auto; padding: 16px;
+    position: relative; display: flex; flex-direction: column; gap: 12px;
+  }
+  .mkt-modal-x {
+    position: absolute; top: 8px; right: 10px; background: none; border: 0;
+    color: var(--muted); font-size: 15px; cursor: pointer; font-family: inherit;
+  }
+  .mkt-modal-x:hover { color: var(--text); }
+  .mkt-modal-head { display: flex; gap: 12px; align-items: center; padding-right: 14px; }
+  .mkt-rep-big { margin-left: auto; text-align: right; font-size: 23px; font-weight: 700; }
+  .mkt-rep-big span { display: block; font-size: 10.5px; font-weight: 400; color: var(--muted); }
+  .mkt-rep-big.pos { color: var(--ok); }
+  .mkt-rep-big.neg { color: #ff6b6b; }
+  .mkt-rep-big.zero { color: var(--muted); }
+  .mkt-copy { padding: 3px 8px; font-size: 11px; margin-left: 6px; }
+  .mkt-fb-list { display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow: auto; }
+  .mkt-fb {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 9px; font-size: 13px;
+  }
+  .mkt-fb-rate { font-weight: 700; margin-right: 6px; }
+  .mkt-fb.pos .mkt-fb-rate { color: var(--ok); }
+  .mkt-fb.neg .mkt-fb-rate { color: #ff6b6b; }
+  .mkt-fb-from { color: var(--muted); font-size: 11.5px; }
+  .mkt-fb-comment { margin-top: 3px; color: #cfc6b4; }
+  .mkt-fb .mkt-date { float: right; }
+  .mkt-fb-form {
+    border-top: 1px dashed var(--line); padding-top: 10px;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .mkt-fb-form label.chip { display: inline-flex; align-items: center; }
+  .mkt-fb-form label.chip input { margin-right: 5px; accent-color: var(--gold); }
+  .mkt-fb-form .search { flex: 1 1 160px; min-width: 140px; }
+  .mkt-fb-title { flex: 1 1 100%; font-size: 12.5px; color: var(--muted); }
+  .mkt-muted { color: var(--muted); font-size: 12.5px; }
+
   @media (max-width: 640px) {
     h1 { font-size: 21px; }
     .stat { min-width: 104px; padding: 8px 10px; }
@@ -199,6 +385,7 @@
     <div class="tabs">
       <button data-tab="bosses" class="active">By boss</button>
       <button data-tab="items">Items</button>
+      <button data-tab="market">Market</button>
     </div>
     <div class="chips" id="chips"></div>
     <input class="search" id="search" type="search" placeholder="Search item or boss…">
@@ -211,6 +398,7 @@
   <footer id="footer"></footer>
 </div>
 
+<script src="data/market-config.js"></script>
 <script src="data/bosses.js"></script>
 <script>
 (function () {
@@ -392,6 +580,796 @@
       });
     }
 
+    // ------------------------------------------------------------------
+    // Community market — Supabase (Postgres + RLS) with Steam OpenID login.
+    // Backend setup: supabase/SETUP.md · public config: data/market-config.js
+    // ------------------------------------------------------------------
+    var SB_CONF = window.FAREVER_MARKET_CONFIG || {};
+    var SB_URL = String(SB_CONF.url || '').replace(/\/+$/, '');
+    var SB_ANON = SB_CONF.anon || '';
+    var SB_FN = String(SB_CONF.fn || 'steam-auth');
+    var MK_STORE = 'fareverMarket.session.v1';
+    var REGIONS = [['NA', 'North America'], ['SA', 'South America'], ['EU', 'Europe'],
+      ['AS', 'Asia'], ['CN', 'China']];
+    var RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
+    var MKT_CATS = [['all', 'All categories'], ['weapon', 'Weapons'], ['equipment', 'Equipment'],
+      ['mount', 'Mounts'], ['glider', 'Gliders']];
+    var RARITY_CAP = { mount: ['Epic'], glider: ['Epic'], equipment: ['Common', 'Uncommon', 'Rare'] };
+    var market = {
+      ready: false, loading: false, busy: false, error: '',
+      openidBusy: false,
+      session: null, profiles: [], announcements: [], feedback: [],
+      kind: 'all', showClosed: false,
+      pool: [], note: '',
+      pick: { kind: 'have', cat: 'all', item: '', rarity: 'auto', custom: '' },
+      modal: null
+    };
+    window.__fareverMarket = market; // debug hook for smoke.js
+
+    function sbConfigured() { return !!(SB_URL && SB_ANON); }
+
+    function mkSaveSession(s) {
+      try { s ? localStorage.setItem(MK_STORE, JSON.stringify(s)) : localStorage.removeItem(MK_STORE); } catch (e) {}
+    }
+    function mkLoadSession() {
+      try { return JSON.parse(localStorage.getItem(MK_STORE)); } catch (e) { return null; }
+    }
+    function mkToken() { return (market.session && market.session.access_token) || SB_ANON; }
+
+    var mkRefreshing = null;
+    function mkEnsureAuth() {
+      var s = market.session;
+      if (!s) return Promise.resolve(true);
+      if (!s.expires_at || Date.now() < s.expires_at - 60000) return Promise.resolve(true);
+      if (mkRefreshing) return mkRefreshing;
+      if (typeof fetch !== 'function') return Promise.resolve(true);
+      mkRefreshing = fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON },
+        body: JSON.stringify({ refresh_token: s.refresh_token })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('expired');
+        return r.json();
+      }).then(function (d) {
+        s.access_token = d.access_token;
+        s.refresh_token = d.refresh_token;
+        s.expires_at = Date.now() + (d.expires_in || 3600) * 1000;
+        mkSaveSession(s);
+        return true;
+      }).catch(function () {
+        market.session = null;
+        mkSaveSession(null);
+        return false;
+      }).then(function (v) { mkRefreshing = null; return v; });
+      return mkRefreshing;
+    }
+
+    function mkErrMsg(status, text) {
+      var t = String(text || '');
+      try { var j = JSON.parse(t); t = j.message || j.error_description || j.error || t; } catch (e) {}
+      if (t.indexOf('row-level security') !== -1 || status === 42501)
+        return 'Not allowed — sign out and sign in again.';
+      return 'Error ' + status + ': ' + String(t).slice(0, 160);
+    }
+
+    function sbQuery(pathAndQuery, opts) {
+      opts = opts || {};
+      return mkEnsureAuth().then(function (ok) {
+        if (!ok && opts.authRequired) throw new Error('Your session expired — sign in again.');
+        if (typeof fetch !== 'function') throw new Error('fetch unavailable');
+        var headers = { apikey: SB_ANON, Authorization: 'Bearer ' + mkToken() };
+        if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+        if (opts.prefer) headers.Prefer = opts.prefer;
+        return fetch(SB_URL + '/rest/v1/' + pathAndQuery, {
+          method: opts.method || 'GET',
+          headers: headers,
+          body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
+        }).then(function (r) {
+          if (!r.ok) return r.text().then(function (t) { throw new Error(mkErrMsg(r.status, t)); });
+          if (r.status === 204 || opts.noReturn) return null;
+          return (r.headers.get('content-type') || '').indexOf('json') !== -1 ? r.json() : r.text();
+        });
+      });
+    }
+
+    function profileOf(steamId) {
+      for (var i = 0; i < market.profiles.length; i++)
+        if (market.profiles[i].steam_id === steamId) return market.profiles[i];
+      return null;
+    }
+    function repOf(steamId) {
+      var sum = 0, n = 0;
+      market.feedback.forEach(function (f) {
+        if (f.to_steam_id === steamId) { sum += f.rating; n++; }
+      });
+      return { sum: sum, n: n };
+    }
+    function myFeedbackTo(steamId) {
+      if (!market.session) return null;
+      for (var i = 0; i < market.feedback.length; i++) {
+        var f = market.feedback[i];
+        if (f.from_steam_id === market.session.steam_id && f.to_steam_id === steamId) return f;
+      }
+      return null;
+    }
+    function myAnnouncement(a) { return !!(market.session && a.steam_id === market.session.steam_id); }
+
+    function upsertProfile(p) {
+      if (!p || !p.steam_id) return;
+      for (var i = 0; i < market.profiles.length; i++) {
+        if (market.profiles[i].steam_id === p.steam_id) { market.profiles[i] = p; return; }
+      }
+      market.profiles.push(p);
+    }
+
+    function regionTitle(code) {
+      for (var i = 0; i < REGIONS.length; i++) if (REGIONS[i][0] === code) return REGIONS[i][1];
+      return code;
+    }
+    function regionBadge(code) {
+      if (!code) return '';
+      return '<span class="mkt-region-badge" data-r="' + esc(code) + '" title="' +
+        esc(regionTitle(code)) + '">' + esc(code) + '</span>';
+    }
+    function myRegion() {
+      if (!market.session) return null;
+      var p = profileOf(market.session.steam_id);
+      return (p && p.region) || market.session.region || null;
+    }
+    function mktCatLabel(c) {
+      for (var i = 0; i < MKT_CATS.length; i++) if (MKT_CATS[i][0] === c) return MKT_CATS[i][1];
+      return c;
+    }
+    function defaultRarity(cat) {
+      var cap = RARITY_CAP[cat];
+      if (!cap) return 'auto';
+      return cap.length === 1 ? cap[0] : '';
+    }
+
+    function marketLoad() {
+      if (!sbConfigured()) {
+        market.ready = true;
+        if (state.tab === 'market') render();
+        return Promise.resolve();
+      }
+      if (market.loading) return Promise.resolve();
+      market.loading = true;
+      market.error = '';
+      if (state.tab === 'market') render();
+      return Promise.all([
+        sbQuery('profiles?select=steam_id,display_name,avatar,region&order=display_name.asc'),
+        sbQuery('announcements?select=*&order=created_at.desc&limit=500'),
+        sbQuery('feedback?select=*')
+      ]).then(function (res) {
+        market.profiles = res[0] || [];
+        market.announcements = res[1] || [];
+        market.feedback = res[2] || [];
+        market.ready = true;
+      }).catch(function (e) {
+        market.error = e.message;
+        market.ready = true;
+      }).then(function () {
+        market.loading = false;
+        if (state.tab === 'market') render();
+      });
+    }
+
+    function marketInit() {
+      if (!market.session) {
+        var s = mkLoadSession();
+        if (s) market.session = s;
+      }
+      marketLoad();
+    }
+
+    function steamLogin() {
+      if (location.protocol !== 'http:' && location.protocol !== 'https:') {
+        market.error = 'Steam sign-in needs the deployed site (or a local server, e.g. npx serve) — file:// cannot receive the redirect.';
+        render();
+        return;
+      }
+      var ret = location.origin + location.pathname;
+      var st = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      try { sessionStorage.setItem('mkt_state', st); } catch (e) {}
+      var url = 'https://steamcommunity.com/openid/login?' + new URLSearchParams({
+        'openid.ns': 'http://specs.openid.net/auth/2.0',
+        'openid.mode': 'checkid_setup',
+        'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
+        'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
+        'openid.return_to': ret + (ret.indexOf('?') === -1 ? '?' : '&') + 'mkt_state=' + st,
+        'openid.realm': location.origin
+      }).toString();
+      location.href = url;
+    }
+
+    function handleOpenIdReturn() {
+      var params;
+      try { params = new URLSearchParams(location.search); } catch (e) { return false; }
+      if (!params.get('openid.claimed_id')) return false;
+      market.openidBusy = true;
+      state.tab = 'market';
+      document.querySelectorAll('.tabs button').forEach(function (x) {
+        x.classList.toggle('active', x.getAttribute('data-tab') === 'market');
+      });
+      var body = {};
+      params.forEach(function (v, k) { if (k.indexOf('openid.') === 0) body[k] = v; });
+      var st = params.get('mkt_state'), expect = null;
+      try { expect = sessionStorage.getItem('mkt_state'); sessionStorage.removeItem('mkt_state'); } catch (e) {}
+      history.replaceState(null, '', location.pathname);
+      render();
+      if (expect && st !== expect) {
+        market.openidBusy = false;
+        market.error = 'Login state mismatch — please try again.';
+        render();
+        return true;
+      }
+      if (!sbConfigured()) {
+        market.openidBusy = false;
+        market.error = 'Market backend not configured yet (see supabase/SETUP.md).';
+        render();
+        return true;
+      }
+      fetch(SB_URL + '/functions/v1/' + SB_FN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON },
+        body: JSON.stringify(body)
+      }).then(function (r) {
+        return r.json().then(function (j) {
+          if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+          return j;
+        });
+      }).then(function (j) {
+        market.session = {
+          access_token: j.session.access_token,
+          refresh_token: j.session.refresh_token,
+          expires_at: Date.now() + (j.session.expires_in || 3600) * 1000,
+          steam_id: j.profile.steam_id,
+          display_name: j.profile.display_name,
+          avatar: j.profile.avatar
+        };
+        mkSaveSession(market.session);
+        market.openidBusy = false;
+        market.error = '';
+        marketLoad();
+      }).catch(function (e) {
+        market.openidBusy = false;
+        market.error = 'Steam sign-in failed: ' + e.message;
+        render();
+      });
+      return true;
+    }
+
+    function visibleAnnouncements() {
+      var q = state.q;
+      return market.announcements.filter(function (a) {
+        if (!market.showClosed && a.status === 'closed') return false;
+        var its = a.items || [];
+        if (market.kind !== 'all') {
+          var any = false;
+          for (var x = 0; x < its.length; x++) if (its[x].kind === market.kind) { any = true; break; }
+          if (!any) return false;
+        }
+        if (q) {
+          var p = profileOf(a.steam_id);
+          var hay = its.map(function (it) {
+            return (it.item_name || '') + ' ' + (it.kind || '') + ' ' + (it.rarity || '');
+          }).concat([a.note || '', p ? p.display_name : '', a.steam_id]).join(' ').toLowerCase();
+          if (hay.indexOf(q) === -1) return false;
+        }
+        return true;
+      });
+    }
+
+    function avatarHtml(p, big) {
+      var cls = 'mkt-avatar' + (big ? ' big' : '');
+      if (p && p.avatar)
+        return '<img class="' + cls + '" src="' + esc(p.avatar) + '" alt="" onerror="this.style.visibility=\'hidden\'">';
+      return '<span class="' + cls + '">' + esc(p && p.display_name ? p.display_name.charAt(0) : '?') + '</span>';
+    }
+
+    function mkRepBadge(steamId) {
+      var r = repOf(steamId);
+      var cls = r.sum > 0 ? 'pos' : (r.sum < 0 ? 'neg' : 'zero');
+      return '<button class="mkt-rep ' + cls + '" data-mkt="profile" data-steam="' + esc(steamId) +
+        '" title="Reputation ' + r.sum + ' from ' + r.n + ' trader(s) — click for profile">' +
+        (r.sum > 0 ? '+' : '') + r.sum + '</button>';
+    }
+
+    function itemThumbHtml(it) {
+      var known = it.item_id ? itemsById[it.item_id] : null;
+      return '<span class="dthumb">' +
+        (known && known.icon ? img(known.icon, it.item_name) : esc(String(it.item_name || '?').charAt(0))) +
+        '</span>';
+    }
+
+    function rarityBadgeHtml(it) {
+      if (!it) return '';
+      var known = it.item_id ? itemsById[it.item_id] : null;
+      var rar = it.rarity || (known ? known.rarity : null);
+      return rar ? '<span class="badge rarity-' + esc(rar) + '">' + esc(rar) + '</span>' : '';
+    }
+
+    function pickOption(i) {
+      return '<option value="' + esc(i.itemId) + '"' + (market.pick.item === i.itemId ? ' selected' : '') + '>' +
+        esc(i.name) + (i.rarity ? ' · ' + esc(i.rarity) : '') + '</option>';
+    }
+
+    function pickOptions() {
+      var cat = market.pick.cat;
+      var html = '';
+      if (cat === 'all') {
+        var byCat = {};
+        items.forEach(function (i) { (byCat[i.category] = byCat[i.category] || []).push(i); });
+        Object.keys(byCat).forEach(function (c) {
+          html += '<optgroup label="' + esc(mktCatLabel(c)) + '">' +
+            byCat[c].map(pickOption).join('') + '</optgroup>';
+        });
+      } else {
+        html = items.filter(function (i) { return i.category === cat; }).map(pickOption).join('');
+      }
+      if (!html) html = '<option value="">No items in this category</option>';
+      return html;
+    }
+
+    function poolHtml() {
+      if (!market.pool.length)
+        return '<div class="mkt-pool-empty">No items yet — add your first with the row above.</div>';
+      var html = '<div class="mkt-pool">';
+      market.pool.forEach(function (it, idx) {
+        html += '<div class="mkt-pool-row">' +
+          '<span class="badge mkt-kind ' + esc(it.kind) + '">' + (it.kind === 'have' ? 'Have' : 'Want') + '</span>' +
+          itemThumbHtml(it) +
+          '<span class="mkt-pool-name">' + esc(it.item_name) + '</span>' +
+          rarityBadgeHtml(it) +
+          '<button type="button" class="mkt-pool-x" data-mkt="rmitem" data-idx="' + idx +
+            '" title="Remove">&#10005;</button>' +
+        '</div>';
+      });
+      return html + '</div>';
+    }
+
+    function composeHtml() {
+      var r = myRegion();
+      var html = '<div class="mkt-compose">';
+      html += '<div class="mkt-region-row">' +
+        '<span class="mkt-region-label">' + (r ? 'Your region:' : 'Your region (required):') + '</span>';
+      REGIONS.forEach(function (rg) {
+        html += '<button type="button" class="chip mkt-region' + (r === rg[0] ? ' active' : '') +
+          '" data-mkt="setregion" data-val="' + rg[0] + '" data-r="' + rg[0] + '" title="' +
+          esc(rg[1]) + '">' + rg[0] + '</button>';
+      });
+      if (r) html += '<span class="mkt-region-full">' + esc(regionTitle(r)) + '</span>';
+      html += '</div>';
+      html += '<div class="mkt-add-row">' +
+        '<div class="mkt-kinds">' +
+          '<button type="button" class="chip' + (market.pick.kind === 'have' ? ' active' : '') +
+            '" data-mkt="pickkind" data-val="have">I have</button>' +
+          '<button type="button" class="chip' + (market.pick.kind === 'want' ? ' active' : '') +
+            '" data-mkt="pickkind" data-val="want">I want</button>' +
+        '</div>' +
+        '<select class="search" id="pick-cat" title="Category">';
+      MKT_CATS.forEach(function (c) {
+        html += '<option value="' + c[0] + '"' + (market.pick.cat === c[0] ? ' selected' : '') + '>' +
+          esc(c[1]) + '</option>';
+      });
+      html += '</select>';
+      if (market.pick.cat === 'equipment') {
+        html += '<input class="search mkt-pick-custom" id="pick-custom" maxlength="100"' +
+          ' placeholder="Item name — armor, necklace or ring" value="' + esc(market.pick.custom) + '">';
+      } else {
+        html += '<select class="search" id="pick-item" title="Item">' +
+          '<option value=""' + (market.pick.item ? '' : ' selected') + '>Pick an item…</option>' +
+          pickOptions() + '</select>';
+      }
+      var rarCap = RARITY_CAP[market.pick.cat];
+      var rarCur = market.pick.rarity;
+      html += '<select class="search mkt-pick-rar" id="pick-rarity" title="Rarity">';
+      if (rarCap) {
+        if (rarCap.length > 1) {
+          html += '<option value=""' + (rarCur === '' ? ' selected' : '') + '>Rarity (optional)</option>';
+        }
+        rarCap.forEach(function (x) {
+          html += '<option value="' + esc(x) + '"' +
+            (rarCur === x || rarCap.length === 1 ? ' selected' : '') + '>' + esc(x) + '</option>';
+        });
+      } else {
+        html += '<option value="auto"' + (rarCur === 'auto' ? ' selected' : '') + '>Rarity: auto</option>';
+        RARITIES.forEach(function (x) {
+          html += '<option value="' + esc(x) + '"' + (rarCur === x ? ' selected' : '') + '>' +
+            esc(x) + '</option>';
+        });
+      }
+      html += '</select>' +
+        '<button type="button" class="own-btn mkt-add" data-mkt="additem"' +
+          (market.busy ? ' disabled' : '') + '>+ Add</button>' +
+      '</div>';
+      html += poolHtml();
+      html += '<input class="search mkt-note-field" id="mkt-note" maxlength="500"' +
+          ' placeholder="Note: price, server, timing (optional)" value="' + esc(market.note) + '">' +
+        '<button type="button" class="own-btn mkt-post" data-mkt="post"' + (market.busy ? ' disabled' : '') + '>' +
+          (market.busy ? 'Posting…' : 'Post announcement') + '</button>';
+      html += '</div>';
+      return html;
+    }
+
+    function announcementHtml(a) {
+      var p = profileOf(a.steam_id);
+      var own = myAnnouncement(a);
+      var closed = a.status === 'closed';
+      var its = a.items || [];
+      var first = its.length ? its[0] : null;
+      var known0 = first && first.item_id ? itemsById[first.item_id] : null;
+      var nHave = 0, nWant = 0;
+      its.forEach(function (it) { if (it.kind === 'want') nWant++; else nHave++; });
+      var headName = its.length === 1 ? String(first.item_name || 'Item') : its.length + ' items';
+      var meta = (nHave ? '<span class="badge mkt-kind have">' + nHave + ' have</span>' : '') +
+        (nWant ? '<span class="badge mkt-kind want">' + nWant + ' want</span>' : '') +
+        (closed ? '<span class="badge mkt-closed">Closed</span>' : '') +
+        (its.length === 1 ? rarityBadgeHtml(first) : '');
+      var rows = its.map(function (it) {
+        return '<div class="mkt-item-row">' +
+          '<span class="badge mkt-kind ' + esc(it.kind) + '">' + (it.kind === 'have' ? 'Have' : 'Want') + '</span>' +
+          itemThumbHtml(it) +
+          '<span class="mkt-item-name">' + esc(it.item_name) + '</span>' +
+          rarityBadgeHtml(it) +
+        '</div>';
+      }).join('');
+      return '<div class="card mkt-listing' + (closed ? ' closed' : '') + '">' +
+        '<div class="head">' +
+          '<div class="thumb">' + (known0 && known0.icon ? img(known0.icon, headName) : esc(headName.charAt(0))) + '</div>' +
+          '<div><div class="name">' + esc(headName) + '</div>' +
+            '<div class="meta">' + meta + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mkt-items">' + rows + '</div>' +
+        (a.note ? '<div class="mkt-note-text">' + esc(a.note) + '</div>' : '') +
+        '<div class="mkt-seller">' + avatarHtml(p) +
+          '<span class="mkt-seller-name">' + esc(p ? p.display_name : a.steam_id) + '</span>' +
+          mkRepBadge(a.steam_id) +
+          (p ? regionBadge(p.region) : '') +
+          '<a class="mkt-contact" href="https://steamcommunity.com/profiles/' + esc(a.steam_id) +
+            '" target="_blank" rel="noopener">Contact on Steam</a>' +
+        '</div>' +
+        '<div class="mkt-listing-foot">' +
+          '<span class="mkt-date">' + esc(String(a.created_at || '').slice(0, 10)) + '</span>' +
+          (own
+            ? '<span class="mkt-own-actions">' +
+                (closed
+                  ? '<button class="ghost" data-mkt="relist" data-id="' + esc(a.id) + '">Relist</button>'
+                  : '<button class="ghost" data-mkt="done" data-id="' + esc(a.id) + '">Mark done</button>') +
+                '<button class="ghost" data-mkt="del" data-id="' + esc(a.id) + '">Delete</button>' +
+              '</span>'
+            : '') +
+        '</div>' +
+      '</div>';
+    }
+
+    function modalHtml() {
+      var steamId = market.modal;
+      if (!steamId) return '';
+      var p = profileOf(steamId);
+      var r = repOf(steamId);
+      var rows = market.feedback.filter(function (f) { return f.to_steam_id === steamId; })
+        .sort(function (a, b) { return String(b.created_at).localeCompare(String(a.created_at)); });
+      var list = rows.map(function (f) {
+        var fp = profileOf(f.from_steam_id);
+        return '<div class="mkt-fb ' + (f.rating > 0 ? 'pos' : 'neg') + '">' +
+          '<span class="mkt-fb-rate">' + (f.rating > 0 ? '+1' : '&minus;1') + '</span>' +
+          '<span class="mkt-fb-from">by ' + esc(fp ? fp.display_name : f.from_steam_id) + '</span>' +
+          '<span class="mkt-date">' + esc(String(f.created_at || '').slice(0, 10)) + '</span>' +
+          (f.comment ? '<div class="mkt-fb-comment">' + esc(f.comment) + '</div>' : '') +
+        '</div>';
+      }).join('');
+      var fb = myFeedbackTo(steamId);
+      var form;
+      if (market.session && market.session.steam_id !== steamId) {
+        var sel = fb ? fb.rating : 1;
+        form = '<div class="mkt-fb-form">' +
+          '<div class="mkt-fb-title">' + (fb ? 'Your feedback for this trader — update it any time' : 'Traded with them? Leave feedback') + '</div>' +
+          '<label class="chip"><input type="radio" name="mkt-fb" value="1"' + (sel === 1 ? ' checked' : '') + '> +1 Positive</label>' +
+          '<label class="chip"><input type="radio" name="mkt-fb" value="-1"' + (sel === -1 ? ' checked' : '') + '> &minus;1 Negative</label>' +
+          '<input class="search" id="mkt-fb-comment" maxlength="500" placeholder="Comment (optional)" value="' +
+            esc(fb ? fb.comment : '') + '">' +
+          '<button class="own-btn mkt-post" data-mkt="fbsave" data-steam="' + esc(steamId) + '"' +
+            (market.busy ? ' disabled' : '') + '>' + (fb ? 'Update feedback' : 'Save feedback') + '</button>' +
+        '</div>';
+      } else if (!market.session) {
+        form = '<div class="mkt-fb-form"><div class="mkt-fb-title">Sign in with Steam to leave feedback.</div></div>';
+      } else {
+        form = '';
+      }
+      return '<div class="mkt-modal-back" data-mkt="closemodal">' +
+        '<div class="mkt-modal" data-mkt="noop">' +
+          '<button class="mkt-modal-x" data-mkt="closemodal" title="Close">&#10005;</button>' +
+          '<div class="mkt-modal-head">' + avatarHtml(p, true) +
+            '<div><div class="name">' + esc(p ? p.display_name : steamId) + '</div>' +
+              '<div class="mkt-date">Steam ' + esc(steamId) +
+              ' <button class="ghost mkt-copy" data-mkt="copyid" data-steam="' + esc(steamId) + '">Copy ID</button></div>' +
+            '</div>' +
+            '<div class="mkt-rep-big ' + (r.sum > 0 ? 'pos' : r.sum < 0 ? 'neg' : 'zero') + '">' +
+              (r.sum > 0 ? '+' : '') + r.sum + '<span>' + r.n + ' feedback</span></div>' +
+          '</div>' +
+          '<div class="mkt-fb-list">' + (list || '<div class="mkt-muted">No feedback yet.</div>') + '</div>' +
+          form +
+        '</div>' +
+      '</div>';
+    }
+
+    function marketHtml() {
+      if (market.openidBusy)
+        return '<div class="mkt-hero"><div class="mkt-spin"></div><div>Verifying your Steam login…</div></div>';
+      if (!sbConfigured())
+        return '<div class="mkt-hero">' +
+          '<div class="mkt-hero-title">Community Market</div>' +
+          '<div class="mkt-hero-text">A community notice board: announce what you have and what you\'re looking for, then take the deal to Steam. Check every trader\'s reputation before you contact them.<br><br>' +
+          'The backend is not configured yet: follow <code>supabase/SETUP.md</code>, then fill in <code>data/market-config.js</code>.</div>' +
+        '</div>';
+      var parts = [];
+      if (market.session) {
+        var mp = profileOf(market.session.steam_id);
+        parts.push('<div class="mkt-me">' +
+          avatarHtml(mp || { display_name: market.session.display_name, avatar: market.session.avatar }) +
+          '<span class="mkt-seller-name">' + esc(market.session.display_name) + '</span>' +
+          mkRepBadge(market.session.steam_id) +
+          regionBadge(myRegion()) +
+          '<button class="ghost" data-mkt="signout">Sign out</button></div>');
+      } else {
+        parts.push('<div class="mkt-hero">' +
+          '<div class="mkt-hero-title">Community Market</div>' +
+          '<div class="mkt-hero-text">Announce what you have or what you\'re seeking, find what you need, and check every trader\'s reputation first. Everything happens on Steam — this board just gets the word out. Sign in with your Steam account.</div>' +
+          '<button class="mkt-steam-btn" data-mkt="signin">Sign in with Steam</button>' +
+        '</div>');
+      }
+      if (market.error)
+        parts.push('<div class="mkt-error">' + esc(market.error) +
+          ' <button class="ghost" data-mkt="clearerr">Dismiss</button></div>');
+      if (market.session) parts.push(composeHtml());
+      var list = visibleAnnouncements();
+      var fbtns = '';
+      [['all', 'All'], ['have', 'Have'], ['want', 'Want']].forEach(function (k) {
+        fbtns += '<button class="chip' + (market.kind === k[0] ? ' active' : '') +
+          '" data-mkt="mfilter" data-val="' + k[0] + '">' + k[1] + '</button>';
+      });
+      parts.push('<div class="mkt-filters">' + fbtns +
+        '<button class="chip' + (market.showClosed ? ' active' : '') + '" data-mkt="closedtoggle">Show closed</button>' +
+        '<span class="mkt-count">' + list.length + ' announcement(s)</span>' +
+        '<span class="mkt-spacer"></span>' +
+        '<button class="ghost" data-mkt="reload"' + (market.loading ? ' disabled' : '') + '>' +
+          (market.loading ? 'Loading…' : 'Refresh') + '</button>' +
+      '</div>');
+      if (!market.ready) parts.push('<div class="empty">Loading market…</div>');
+      else parts.push(list.length
+        ? '<div class="grid">' + list.map(announcementHtml).join('') + '</div>'
+        : '<div class="empty">' + (market.announcements.length
+            ? 'Nothing matches this filter.'
+            : 'No announcements yet — be the first to post one.') + '</div>');
+      if (market.modal) parts.push(modalHtml());
+      return parts.join('');
+    }
+
+    function captureCompose() {
+      var n = document.getElementById('mkt-note');
+      var c = document.getElementById('pick-cat');
+      var i = document.getElementById('pick-item');
+      var x = document.getElementById('pick-custom');
+      var r = document.getElementById('pick-rarity');
+      if (n) market.note = n.value;
+      if (c) market.pick.cat = c.value;
+      if (i) market.pick.item = i.value;
+      if (x) market.pick.custom = x.value;
+      if (r) market.pick.rarity = r.value;
+    }
+
+    function setRegion(code) {
+      if (!market.session) return;
+      market.busy = true;
+      market.error = '';
+      render();
+      sbQuery('profiles?steam_id=eq.' + encodeURIComponent(market.session.steam_id), {
+        method: 'PATCH', authRequired: true, prefer: 'return=representation',
+        body: { region: code, updated_at: new Date().toISOString() }
+      }).then(function (rows) {
+        market.busy = false;
+        if (rows && rows[0]) {
+          upsertProfile(rows[0]);
+          market.session.region = code;
+          mkSaveSession(market.session);
+        } else {
+          market.error = 'Could not save your region — sign out and sign in again.';
+        }
+        render();
+      }).catch(function (e) {
+        market.busy = false;
+        market.error = e.message;
+        render();
+      });
+    }
+
+    function addPoolItem() {
+      var p = market.pick;
+      if (market.pool.length >= 20) {
+        market.error = 'An announcement can hold up to 20 items.';
+        render();
+        return;
+      }
+      var entry;
+      var cap = RARITY_CAP[p.cat];
+      if (p.cat === 'equipment') {
+        var nm = p.custom.trim();
+        if (!nm) { market.error = 'Type an item name first.'; render(); return; }
+        entry = { kind: p.kind, item_id: null, item_name: nm.slice(0, 100),
+          rarity: cap.indexOf(p.rarity) >= 0 ? p.rarity : null };
+      } else {
+        var it = p.item ? itemsById[p.item] : null;
+        if (!it) { market.error = 'Pick an item first.'; render(); return; }
+        var rar;
+        if (it.category === 'mount' || it.category === 'glider') rar = 'Epic';
+        else if (p.rarity && p.rarity !== 'auto') rar = p.rarity;
+        else rar = it.rarity || null;
+        entry = { kind: p.kind, item_id: it.itemId, item_name: it.name.slice(0, 100), rarity: rar };
+      }
+      market.pool.push(entry);
+      market.pick.item = '';
+      market.pick.custom = '';
+      market.pick.rarity = defaultRarity(p.cat);
+      market.error = '';
+      render();
+    }
+
+    function postAnnouncement() {
+      if (!market.session) { market.error = 'Sign in with Steam first.'; render(); return; }
+      captureCompose();
+      if (!myRegion()) { market.error = 'Choose your region first.'; render(); return; }
+      if (!market.pool.length) { market.error = 'Add at least one item to your announcement.'; render(); return; }
+      market.busy = true;
+      market.error = '';
+      render();
+      sbQuery('announcements', {
+        method: 'POST', authRequired: true, prefer: 'return=representation',
+        body: {
+          steam_id: market.session.steam_id,
+          note: market.note.slice(0, 500),
+          items: market.pool.slice(0, 20)
+        }
+      }).then(function (rows) {
+        market.pool = [];
+        market.note = '';
+        market.pick = { kind: 'have', cat: 'all', item: '', rarity: 'auto', custom: '' };
+        if (rows && rows[0]) market.announcements.unshift(rows[0]);
+        market.busy = false;
+        render();
+      }).catch(function (e) {
+        market.busy = false;
+        market.error = e.message;
+        render();
+      });
+    }
+
+    function setAnnouncementStatus(id, status) {
+      market.busy = true;
+      market.error = '';
+      render();
+      sbQuery('announcements?id=eq.' + encodeURIComponent(id), {
+        method: 'PATCH', authRequired: true, noReturn: true, body: { status: status }
+      }).then(function () {
+        for (var i = 0; i < market.announcements.length; i++) {
+          if (market.announcements[i].id === id) market.announcements[i].status = status;
+        }
+        market.busy = false;
+        render();
+      }).catch(function (e) {
+        market.busy = false;
+        market.error = e.message;
+        render();
+      });
+    }
+
+    function deleteAnnouncement(id) {
+      if (!confirm('Delete this announcement?')) return;
+      market.busy = true;
+      market.error = '';
+      render();
+      sbQuery('announcements?id=eq.' + encodeURIComponent(id), {
+        method: 'DELETE', authRequired: true, noReturn: true
+      }).then(function () {
+        market.announcements = market.announcements.filter(function (a) { return a.id !== id; });
+        market.busy = false;
+        render();
+      }).catch(function (e) {
+        market.busy = false;
+        market.error = e.message;
+        render();
+      });
+    }
+
+    function saveFeedback(steamId) {
+      if (!market.session) { market.error = 'Sign in with Steam first.'; render(); return; }
+      var sel = document.querySelector('input[name="mkt-fb"]:checked');
+      var c = document.getElementById('mkt-fb-comment');
+      if (!sel) { market.error = 'Choose +1 or \u22121 first.'; render(); return; }
+      market.busy = true;
+      market.error = '';
+      render();
+      sbQuery('feedback?on_conflict=from_steam_id,to_steam_id', {
+        method: 'POST', authRequired: true,
+        prefer: 'resolution=merge-duplicates,return=minimal',
+        body: {
+          from_steam_id: market.session.steam_id, to_steam_id: steamId,
+          rating: parseInt(sel.value, 10), comment: ((c && c.value) || '').trim().slice(0, 500)
+        }
+      }).then(function () {
+        market.busy = false;
+        return marketLoad();
+      }).catch(function (e) {
+        market.busy = false;
+        market.error = e.message;
+        render();
+      });
+    }
+
+    function marketClick(e) {
+      var el = e.target.closest ? e.target.closest('[data-mkt]') : null;
+      if (!el) return;
+      var act = el.getAttribute('data-mkt');
+      if (act === 'noop') return;
+      if (act === 'signin') return steamLogin();
+      if (act === 'signout') {
+        market.session = null;
+        mkSaveSession(null);
+        market.modal = null;
+        render();
+        return;
+      }
+      if (act === 'clearerr') { market.error = ''; render(); return; }
+      if (act === 'pickkind') {
+        captureCompose();
+        market.pick.kind = el.getAttribute('data-val');
+        render();
+        return;
+      }
+      if (act === 'setregion') {
+        captureCompose();
+        setRegion(el.getAttribute('data-val'));
+        return;
+      }
+      if (act === 'additem') {
+        captureCompose();
+        addPoolItem();
+        return;
+      }
+      if (act === 'rmitem') {
+        captureCompose();
+        var idx = parseInt(el.getAttribute('data-idx'), 10);
+        if (isFinite(idx)) market.pool.splice(idx, 1);
+        render();
+        return;
+      }
+      if (act === 'mfilter') { market.kind = el.getAttribute('data-val'); render(); return; }
+      if (act === 'closedtoggle') { market.showClosed = !market.showClosed; render(); return; }
+      if (act === 'reload') { market.ready = false; marketLoad(); return; }
+      if (act === 'profile') { market.modal = el.getAttribute('data-steam'); render(); return; }
+      if (act === 'closemodal') { market.modal = null; render(); return; }
+      if (act === 'copyid') {
+        var id = el.getAttribute('data-steam');
+        var done = function () {
+          var t = el.textContent;
+          el.textContent = 'Copied!';
+          setTimeout(function () { el.textContent = t; }, 1200);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(id).then(done, function () { done(); });
+        } else {
+          done();
+        }
+        return;
+      }
+      if (act === 'post') return postAnnouncement();
+      if (act === 'done') return setAnnouncementStatus(el.getAttribute('data-id'), 'closed');
+      if (act === 'relist') return setAnnouncementStatus(el.getAttribute('data-id'), 'active');
+      if (act === 'del') return deleteAnnouncement(el.getAttribute('data-id'));
+      if (act === 'fbsave') return saveFeedback(el.getAttribute('data-steam'));
+    }
+
     function renderStats() {
       var t = catTotals();
       var all = items.length;
@@ -410,13 +1388,14 @@
       document.getElementById('subtitle').textContent =
         DATA.bosses.length + ' bosses · ' + all + ' tracked drops · data ' +
         String(DATA.generated || '').slice(0, 10);
-      var notes = [];
-      if (t.weapon && t.weapon.total) notes.push('weapons drop as Rare and upgrade to Legendary (fareverdb rarityRules.weaponMaxRarity)');
-      if (t.legendary.total === 0) notes.push('no boss drops a Legendary directly');
-      document.getElementById('footer').textContent =
-        'Data: ' + (DATA.source || 'fareverdb.com') + ' · filter: ' + (DATA.filter || '') +
-        ' · ticks are saved in this browser' +
-        (notes.length ? ' · ' + notes.join(' · ') : '');
+      document.getElementById('footer').innerHTML =
+        '<div>Data &amp; images: <a href="https://fareverdb.com" target="_blank" rel="noopener">fareverdb.com</a>' +
+        (DATA.source ? ' ' + esc(String(DATA.source).replace(/^fareverdb\.com/, '').trim()) : '') +
+        ' · cross-checked with <a href="https://metaforge.app/farever" target="_blank" rel="noopener">metaforge.app</a></div>' +
+        '<div>Sign in with Steam is safe: the login happens on Steam\u2019s own site (OpenID) — this platform' +
+        ' never sees or stores your Steam password; it only receives your Steam ID and public profile' +
+        ' (name/avatar). Your progress ticks stay saved in this browser, not on your account.</div>' +
+        '<div>Developed by Jardineiro</div>';
     }
 
     function itemCard(i) {
@@ -500,7 +1479,15 @@
 
     function render() {
       renderStats();
+      var isMarket = state.tab === 'market';
+      document.querySelector('.toolbar').classList.toggle('mkt', isMarket);
+      document.getElementById('search').placeholder =
+        isMarket ? 'Search announcements…' : 'Search item or boss…';
       var view = document.getElementById('view');
+      if (isMarket) {
+        view.innerHTML = marketHtml();
+        return;
+      }
       if (state.tab === 'items') {
         var list = visibleItems();
         view.innerHTML = list.length
@@ -515,11 +1502,46 @@
     }
 
     document.getElementById('view').addEventListener('click', function (e) {
+      if (state.tab === 'market') { marketClick(e); return; }
       if (e.target.tagName === 'INPUT') return;
       var t = e.target.closest('[data-id]');
       if (t) toggle(t.getAttribute('data-id'));
     });
-    document.getElementById('view').addEventListener('input', function (e) {
+    function viewInput(e) {
+      if (state.tab === 'market') {
+        var m = e.target;
+        if (!m || !m.getAttribute) return;
+        var id = m.id;
+        if (id === 'mkt-note') { market.note = m.value; return; }
+        if (id === 'pick-custom') { market.pick.custom = m.value; return; }
+        if (id === 'pick-rarity') { market.pick.rarity = m.value; return; }
+        if (id === 'pick-item') {
+          market.pick.item = m.value;
+          var pit = itemsById[m.value];
+          if (pit && pit.rarity) {
+            var pitCap = RARITY_CAP[market.pick.cat];
+            if (!pitCap || pitCap.indexOf(pit.rarity) >= 0) {
+              market.pick.rarity = pit.rarity;
+              var rr = document.getElementById('pick-rarity');
+              if (rr) rr.value = pit.rarity;
+            }
+          }
+          return;
+        }
+        if (id === 'pick-cat') {
+          if (market.pick.cat === m.value) return;
+          captureCompose();
+          market.pick.cat = m.value;
+          market.pick.item = '';
+          market.pick.custom = '';
+          market.pick.rarity = defaultRarity(m.value);
+          render();
+          var focusEl = document.getElementById(m.value === 'equipment' ? 'pick-custom' : 'pick-item');
+          if (focusEl && focusEl.focus) focusEl.focus();
+          return;
+        }
+        return;
+      }
       var el = e.target;
       if (!el.getAttribute) return;
       var v = parseInt(el.value, 10);
@@ -546,11 +1568,14 @@
       var itemId = rateEl.getAttribute('data-itemrate');
       if (bossName && bossesByName[bossName]) rateEl.textContent = rateText(bossesByName[bossName]);
       else if (itemId && itemsById[itemId]) rateEl.textContent = itemRateText(itemsById[itemId]);
-    });
+    }
+    document.getElementById('view').addEventListener('input', viewInput);
+    document.getElementById('view').addEventListener('change', viewInput);
     document.querySelectorAll('.tabs button').forEach(function (b) {
       b.addEventListener('click', function () {
         state.tab = b.getAttribute('data-tab');
         document.querySelectorAll('.tabs button').forEach(function (x) { x.classList.toggle('active', x === b); });
+        if (state.tab === 'market') marketInit();
         render();
       });
     });
@@ -584,7 +1609,7 @@
     });
 
     renderChips();
-    render();
+    if (!handleOpenIdReturn()) render();
   }
 
   if (DATA) {
