@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="575.4646"
-   height="151.22676"
-   viewBox="0 0 575.4646 151.22676"
+   width="1142.8997"
+   height="151.23026"
+   viewBox="0 0 1142.8997 151.23026"
    version="1.1"
    id="svg1"
    xml:space="preserve"
@@ -24,25 +24,32 @@
      inkscape:document-units="px"><inkscape:page
        x="0"
        y="0"
-       width="575.4646"
-       height="151.22676"
+       width="1142.8997"
+       height="151.23026"
        id="page2"
        margin="0"
        bleed="0" /></sodipodi:namedview><defs
      id="defs1"><clipPath
        clipPathUnits="userSpaceOnUse"
        id="clipPath2"><rect
-         style="fill:#000000"
-         id="rect2"
-         width="575.46466"
+         style="fill:#002a37;fill-opacity:1;stroke-width:1.28498"
+         id="rect3"
+         width="950.18585"
          height="151.22676"
          x="760.14868"
          y="163.27138"
-         ry="18.736059" /></clipPath></defs><g
+         ry="18.736059" /></clipPath></defs><rect
+     style="fill:#002a37;fill-opacity:1;stroke-width:1.40927"
+     id="rect2"
+     width="1142.8997"
+     height="151.22676"
+     x="2.7768192e-05"
+     y="0.0035148137"
+     ry="18.736059" /><g
      inkscape:label="Camada 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-760.14868,-163.27138)"><image
+     transform="translate(-759.29739,-164.23812)"><image
        width="593.30853"
        height="254.27509"
        preserveAspectRatio="none"
@@ -51,6 +58,7 @@
        x="750.68036"
        y="124.16405"
        clip-path="url(#clipPath2)"
-       inkscape:export-filename="image1-4.png"
+       inkscape:export-filename="MiniBanner.svg"
        inkscape:export-xdpi="96"
-       inkscape:export-ydpi="96" /></g></svg>
+       inkscape:export-ydpi="96"
+       transform="translate(-0.49446566,0.96675211)" /></g></svg>
