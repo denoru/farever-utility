@@ -2,7 +2,7 @@
   "name": "farever-cast-sequence",
   "displayName": "Cast Sequence",
   "description": "Single-key skill sequencer: strict-order rotation on one key, combat-end cursor reset, Chaos Mark gate for Infernal Plunge, plus a hotkey-press mode.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Denoru",
   "game": "farever",
   "steamAppId": 3672400,

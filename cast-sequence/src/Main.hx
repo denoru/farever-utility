@@ -27,7 +27,7 @@ class Main {
 	static final DEFAULT_HOTKEYS = "R>2>E>Q>G>3>2>1>T>2>1>T>2>T";
 	static final DEFAULT_INJECTOR = "C:/Program Files (x86)/Steam/steamapps/common/Farever/hlx/mods/cast-sequence/injector.exe";
 	static final PLUNGE_KIND = "Daggers_Demondash_Skill1"; // Infernal Plunge
-	static final MARK_STATUSES = ["Daggers_Demondash_Mark", "Status_Chaos_Mark", "Chaos_Mark"];
+	static final MARK_STATUSES = ["Daggers_Demondash_Mark", "Status_Chaos_Mark", "Chaos Mark"];
 
 	static final KEY_NAMES = [
 		"Space", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
@@ -653,6 +653,14 @@ class Main {
 		// knives out (eff variant visible): window rule is the ONLY gate —
 		// base CD reads 0 during the window, so the cd path must not allow it
 		if (sk != null && effOf(sk) != null) return knivesOut() && windowOpen(kind, sk);
+		// throw-only step: its own cd/charges read 0 forever, so without knives
+		// out it must never report ready (was the "ready but rejected" hold)
+		if (kind.indexOf("_Shoot") >= 0) {
+			if (!knivesOut()) return false;
+			var sch = chargeInfo(sk);
+			if (sch != null && sch.max > 0 && sch.cur <= 0) return false;
+			return true;
+		}
 		if (cd == -2 || (cd >= 0 && cd <= 0.001)) return true;
 		if (sk == null) return false;
 		var ch = chargeInfo(sk);
@@ -745,6 +753,7 @@ class Main {
 			}
 		}
 		if (!tgtProbed && unit == null) trace("tgtprobe: no unit found");
+		tgtProbed = true;
 		return unit;
 	}
 
@@ -884,9 +893,13 @@ class Main {
 		return h > 0 ? str.substring(0, h) : str;
 	}
 
+	// EXACT status identity only — the game's own onHit check is
+	// hit.target.hasStatus(Skill.Daggers_Demondash_Mark); any "chaos" substring
+	// match false-positives on boss auras (Chaos Burn/Storm/...)
 	static function isMarkName(s:String):Bool {
-		for (m in MARK_STATUSES) if (s == m) return true;
-		return s.toLowerCase().indexOf("chaos") >= 0;
+		var l = s.toLowerCase();
+		for (m in MARK_STATUSES) if (l == m.toLowerCase()) return true;
+		return false;
 	}
 
 	static function getMarkTarget():Dynamic {
@@ -907,45 +920,102 @@ class Main {
 
 	static var markMemoAt:Float = -999;
 	static var markMemoVal = false;
+	static var markDiagKey = "";
+	static var rmHasStatus:ResolvedMember = null;
+	static var markStatusObj:Dynamic = null;
+	static var markApiTried = false;
 
-	// 0.2s memo: nextCastIdx/HUD scan statuses every frame; the press path may
-	// see a value up to 0.2s old — far below human re-press latency
-	static function targetHasChaosMark():Bool {
-		var now = haxe.Timer.stamp();
-		if (now - markMemoAt < 0.2) return markMemoVal;
-		markMemoAt = now;
-		markMemoVal = computeChaosMark();
+	// memo for HUD/nextCastIdx; the press path passes fresh=true so a mark just
+	// consumed by the plunge itself is never read from a stale cache mid-mash
+	static function targetHasChaosMark(fresh:Bool = false):Bool {
+		if (fresh || haxe.Timer.stamp() - markMemoAt >= 0.2) {
+			markMemoAt = haxe.Timer.stamp();
+			markMemoVal = computeChaosMark();
+		}
 		return markMemoVal;
+	}
+
+	// game's own check when it resolves: hit.target.hasStatus(Mark)
+	// (skills_only.json onHit script); null = API unavailable, fall back to walk
+	static function hasStatusApi(target:Dynamic):Null<Bool> {
+		if (!markApiTried) {
+			markApiTried = true;
+			try {
+				var tSkill = HlxRuntime.resolveType("st.skill.Skill");
+				if (tSkill != null) {
+					try markStatusObj = HlxRuntime.resolveStaticField(tSkill, "Daggers_Demondash_Mark") catch (_:Dynamic) {}
+				}
+			} catch (_:Dynamic) {}
+			trace("markapi: statusObj=" + (markStatusObj != null));
+		}
+		if (markStatusObj == null || target == null) return null;
+		try {
+			if (rmHasStatus == null) rmHasStatus = HlxRuntime.resolveMemberOf(Type.getClass(target), "hasStatus");
+		} catch (_:Dynamic) {}
+		if (rmHasStatus == null) return null;
+		try {
+			var r:Dynamic = HlxRuntime.callResolved(rmHasStatus, [target, markStatusObj]);
+			if (Std.isOfType(r, Bool)) return cast r;
+		} catch (_:Dynamic) {}
+		return null;
+	}
+
+	static function markDiag(state:String, detail:String, result:Bool, names:Array<String>):Void {
+		var key = state + "|" + detail + "|" + (names == null ? "" : names.join(","));
+		if (key == markDiagKey) return;
+		markDiagKey = key;
+		trace("markcheck: " + (result ? "MARKED" : "no mark") + " " + state + " target=" + detail
+			+ (names != null && names.length > 0 ? " statuses=[" + names.join(", ") + "]" : ""));
 	}
 
 	static function computeChaosMark():Bool {
 		var target = getMarkTarget();
-		if (target == null) return false;
+		if (target == null) {
+			markDiag("no-target", "-", false, null);
+			return false;
+		}
+		var cls = "?";
+		try {
+			var cc = Type.getClass(target);
+			if (cc != null) cls = Std.string(Type.getClassName(cc));
+		} catch (_:Dynamic) {}
+		var api = hasStatusApi(target);
+		if (api != null) {
+			markDiag("hasStatus", cls, api, null);
+			return api;
+		}
+		var names = new Array<String>();
+		var found = false;
 		try {
 			var statuses:Dynamic = Reflect.field(target, "statuses");
-			if (statuses == null) return false;
-			var arr:Dynamic = statuses;
-			var pa = Reflect.field(arr, "array");
-			if (pa != null) {
-				var da = Reflect.field(pa, "array");
-				if (da != null) arr = da;
-			}
-			var getDyn = Reflect.field(arr, "getDyn");
-			if (getDyn != null) {
-				for (i in 0...100) {
-					var st:Dynamic = null;
-					try st = Reflect.callMethod(arr, getDyn, [i]) catch (_:Dynamic) {}
-					if (st == null) break;
-					if (isMarkName(statusName(st))) return true;
+			if (statuses != null) {
+				var arr:Dynamic = statuses;
+				var pa = Reflect.field(arr, "array");
+				if (pa != null) {
+					var da = Reflect.field(pa, "array");
+					if (da != null) arr = da;
+				}
+				var getDyn = Reflect.field(arr, "getDyn");
+				if (getDyn != null) {
+					for (i in 0...100) {
+						var st:Dynamic = null;
+						try st = Reflect.callMethod(arr, getDyn, [i]) catch (_:Dynamic) {}
+						if (st == null) break;
+						var n = statusName(st);
+						if (names.length < 12) names.push(n);
+						if (!found && isMarkName(n)) found = true;
+					}
 				}
 			}
 		} catch (_:Dynamic) {}
-		return false;
+		markDiag("walk", cls, found, names);
+		return found;
 	}
 
-	// extra cast permission per step; null = allowed
-	static function gateReason(kind:String):String {
-		if (kind == PLUNGE_KIND && plungeGateOn() && !targetHasChaosMark())
+	// extra cast permission per step; null = allowed.
+	// fresh=true (press path) bypasses the HUD memo
+	static function gateReason(kind:String, fresh:Bool = false):String {
+		if (kind == PLUNGE_KIND && plungeGateOn() && !targetHasChaosMark(fresh))
 			return "target has no Chaos Mark";
 		return null;
 	}
@@ -1029,8 +1099,10 @@ class Main {
 		if (len == 0) return -1;
 		var c = cursor >= len ? 0 : cursor;
 		var walkLen = strictOn() ? 1 : len;
-		for (n in 0...walkLen) {
-			var idx = (c + n) % len;
+		// forward-only, same as advanceAndCast's window pass (display = cast truth)
+		var winLen = strictOn() ? 1 : len - c;
+		for (n in 0...winLen) {
+			var idx = c + n;
 			var kind = config.steps[idx];
 			if (gateReason(kind) != null) continue;
 			var sk = skillOf(kind);
@@ -1059,10 +1131,14 @@ class Main {
 		// CD says not-ready, but charges keep it throwable until the window expires.
 		// Requires knivesOut() to match nextCastIdx() — eff variants alone can't tell
 		// a live throw window from a bogus always-self eff.
-		for (n in 0...walkLen) {
-			var idx = (cursor + n) % len;
+		// Window jump scans FORWARD ONLY: wrapping pulled the windowed step from
+		// behind the cursor into play on every press -> throw loop that starved
+		// every other step (the "3 facas sem plunge" report)
+		var winLen = strictOn() ? 1 : len - cursor;
+		for (n in 0...winLen) {
+			var idx = cursor + n;
 			var kind = config.steps[idx];
-			if (gateReason(kind) != null) continue;
+			if (gateReason(kind, true) != null) continue;
 			var skP = skillOf(kind);
 			if (skP != null && effOf(skP) != null && knivesOut() && windowOpen(kind, skP)) {
 				if (tryCast(kind)) {
@@ -1078,7 +1154,7 @@ class Main {
 		for (n in 0...walkLen) {
 			var idx = (cursor + n) % len;
 			var kind = config.steps[idx];
-			if (gateReason(kind) != null) continue;
+			if (gateReason(kind, true) != null) continue;
 			if (isReady(kind)) {
 				if (tryCast(kind)) {
 					trace("cast " + kind + " at " + idx);
@@ -1100,7 +1176,7 @@ class Main {
 		}
 		if (strictOn()) {
 			var k = config.steps[cursor];
-			var gr = gateReason(k);
+			var gr = gateReason(k, true);
 			if (gr != null) {
 				trace("strict: hold step " + (cursor + 1) + "/" + len + " " + k + " - " + gr);
 				return;

@@ -16,8 +16,11 @@ Reference: https://www.curseforge.com/wow/addons/gse-gnome-sequencer-enhanced-ad
   when the flag can't be read) resets to step 1. Debounced 2s so a one-frame flag
   flicker never resets mid-fight, and it fires once per real transition
 - **Infernal Plunge gate** — `Daggers_Demondash_Skill1` only casts while the target
-  carries Chaos Mark (`Daggers_Demondash_Mark` / any "chaos" status on the target's
-  `statuses`). HUD shows `WAIT: target has no Chaos Mark`, editor shows `gated`.
+  carries Chaos Mark (`Daggers_Demondash_Mark`, exact id/name match; the game's own
+  `hasStatus(Mark)` API is used when it resolves — never a broad "chaos" substring,
+  which false-positives on boss auras). Re-evaluated fresh on every trigger press
+  (the plunge itself consumes the mark, so a stale cache must never allow a recast).
+  HUD shows `WAIT: target has no Chaos Mark`, editor shows `gated`.
   Toggle "Plunge needs Chaos Mark" to disable
 - **Void Fangs throw window** — while knives are out, throws jump the queue and are
   capped by the game's own charges/window rules (max 3 throws / 8s, reset per summon);
