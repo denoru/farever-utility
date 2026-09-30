@@ -36,11 +36,19 @@
   h1 { font-size: 26px; margin: 0; letter-spacing: .5px; }
   h1 span { color: var(--gold); }
   .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .minibanner {
-    display: block; width: 100%; max-width: 575px; height: auto;
-    margin-top: 12px; border: 1px solid var(--line); border-radius: 12px;
-    background: var(--panel);
+  .hero {
+    position: relative; flex: 1 1 460px; max-width: 660px; min-width: 300px;
+    padding: 14px 18px 16px; border: 1px solid var(--line); border-radius: 14px;
+    background: #0d0b09 url('MiniBanner.svg') no-repeat center / cover;
+    overflow: hidden;
   }
+  .hero::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(100deg, rgba(13,11,9,.88) 0%, rgba(13,11,9,.6) 55%, rgba(13,11,9,.12) 100%);
+  }
+  .hero > * { position: relative; z-index: 1; }
+  .hero h1 { text-shadow: 0 2px 10px rgba(0,0,0,.65); }
+  .hero .sub { text-shadow: 0 1px 6px rgba(0,0,0,.8); }
 
   .stats { display: flex; gap: 10px; flex-wrap: wrap; }
   .stat {
@@ -418,11 +426,10 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div>
+    <div class="hero">
       <select class="langsel" id="lang" title="Language"></select>
       <h1>Farever <span>Community Center</span></h1>
-      <div class="sub" id="subtitle">Mounts &middot; Gliders &middot; Legendaries from world &amp; dungeon bosses</div>
-      <img class="minibanner" src="MiniBanner.svg" alt="Farever Community Center">
+      <div class="sub" id="subtitle">Track Bosses - Trade - Meet people</div>
     </div>
     <div class="stats" id="stats"></div>
   </header>
@@ -475,7 +482,7 @@
       'cat.tool': 'Tools', 'cat.gear': 'Gear', 'cat.consumable': 'Consumables', 'cat.material': 'Materials',
       'cat.book': 'Books', 'cat.currency': 'Currency', 'cat.misc': 'Misc',
       statWeapon: 'Legendary-ready', overall: 'Overall',
-      subtitleCounts: '{b} bosses · {i} tracked drops · data {d}',
+      subtitleCounts: 'Track Bosses - Trade - Meet people',
       noDrops: 'No drops match this filter.', noBosses: 'No bosses match this filter.',
       noItems: 'No items match this filter.', nothingMatches: 'Nothing matches',
       worldBoss: 'World boss', bossWord: 'Boss', variants: '{n} variants', lvl: 'Lv ',
@@ -545,7 +552,7 @@
       'cat.tool': 'Ferramentas', 'cat.gear': 'Equipamento', 'cat.consumable': 'Consumíveis', 'cat.material': 'Materiais',
       'cat.book': 'Livros', 'cat.currency': 'Moedas', 'cat.misc': 'Diversos',
       statWeapon: 'Prontos para Lendário', overall: 'Geral',
-      subtitleCounts: '{b} chefes · {i} drops rastreados · dados {d}',
+      subtitleCounts: 'Rastreie os Chefes - Negocie - Conheça Pessoas',
       noDrops: 'Nenhum drop corresponde a este filtro.', noBosses: 'Nenhum chefe corresponde a este filtro.',
       noItems: 'Nenhum item corresponde a este filtro.', nothingMatches: 'Nada corresponde',
       worldBoss: 'Chefe mundial', bossWord: 'Chefe', variants: '{n} variantes', lvl: 'Nv ',
@@ -615,7 +622,7 @@
       'cat.tool': 'Herramientas', 'cat.gear': 'Equipo', 'cat.consumable': 'Consumibles', 'cat.material': 'Materiales',
       'cat.book': 'Libros', 'cat.currency': 'Monedas', 'cat.misc': 'Misceláneos',
       statWeapon: 'Listos para Legendario', overall: 'General',
-      subtitleCounts: '{b} jefes · {i} objetos rastreados · datos {d}',
+      subtitleCounts: 'Rastrea los Jefes - Comercia - Conoce Gente',
       noDrops: 'Ningún drop coincide con este filtro.', noBosses: 'Ningún jefe coincide con este filtro.',
       noItems: 'Ningún objeto coincide con este filtro.', nothingMatches: 'Nada coincide',
       worldBoss: 'Jefe mundial', bossWord: 'Jefe', variants: '{n} variantes', lvl: 'Nv ',

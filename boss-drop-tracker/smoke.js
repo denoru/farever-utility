@@ -43,9 +43,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     '| old notes gone:', !/rarityRules|no boss drops a Legendary/.test(foot.textContent));
   console.log('default tab boss cards:', d.querySelectorAll('#view .boss-card').length);
   console.log('site title:', d.title, '| h1:', d.querySelector('h1').textContent.replace(/\s+/g, ' ').trim());
-  const banner = d.querySelector('.minibanner');
-  console.log('minibanner:', !!banner, '| src:', banner && banner.getAttribute('src'),
-    '| under title:', !!(banner && d.querySelector('h1').compareDocumentPosition(banner) & 4));
+  const hero = d.querySelector('.hero');
+  const cssHasBanner = /url\(['"]?MiniBanner\.svg['"]?\)/.test(d.querySelector('style').textContent);
+  console.log('banner layer hero:', !!hero, '| css bg:', cssHasBanner,
+    '| title inside:', !!(hero && hero.contains(d.querySelector('h1'))),
+    '| lang inside:', !!(hero && hero.contains(d.getElementById('lang'))));
   console.log('top tabs:', [...d.querySelectorAll('.tabs button')].map((b) => b.textContent).join(','),
     '| subtabs:', [...d.querySelectorAll('.subtabs button')].map((b) => b.textContent).join(','),
     '| active tab:', d.querySelector('.tabs button.active').textContent);
