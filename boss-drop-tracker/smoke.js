@@ -1,4 +1,4 @@
-const http = require('http');
+﻿const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -42,8 +42,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     '| steam safety note:', /never sees or stores your Steam password/.test(foot.textContent),
     '| old notes gone:', !/rarityRules|no boss drops a Legendary/.test(foot.textContent));
   console.log('default tab boss cards:', d.querySelectorAll('#view .boss-card').length);
-  console.log('active tab:', d.querySelector('.tabs button.active').textContent);
-  d.querySelector('.tabs button[data-tab="items"]').click();
+  console.log('site title:', d.title, '| h1:', d.querySelector('h1').textContent.replace(/\s+/g, ' ').trim());
+  console.log('top tabs:', [...d.querySelectorAll('.tabs button')].map((b) => b.textContent).join(','),
+    '| subtabs:', [...d.querySelectorAll('.subtabs button')].map((b) => b.textContent).join(','),
+    '| active tab:', d.querySelector('.tabs button.active').textContent);
+  d.querySelector('.subtabs button[data-view="items"]').click();
   await wait(60);
   console.log('item cards:', d.querySelectorAll('#view .card').length);
 
@@ -55,7 +58,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('localStorage:', w.localStorage.getItem('fareverBossTracker.v1'));
   console.log('card owned:', d.querySelector('#view .card').classList.contains('owned'));
 
-  d.querySelector('.tabs button[data-tab="bosses"]').click();
+  d.querySelector('.subtabs button[data-view="bosses"]').click();
   await wait(60);
   console.log('boss cards:', d.querySelectorAll('#view .boss-card').length);
   console.log('drop rows:', d.querySelectorAll('#view .drop-row').length);
@@ -71,8 +74,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('rate after input:', d.querySelector('.run-rate').textContent);
   console.log('runs store:', w.localStorage.getItem('fareverBossTracker.runs.v1'));
   console.log('item runs store:', w.localStorage.getItem('fareverBossTracker.itemruns.v1'));
-  d.querySelector('.tabs button[data-tab="items"]').click();
-  d.querySelector('.tabs button[data-tab="bosses"]').click();
+  d.querySelector('.subtabs button[data-view="items"]').click();
+  d.querySelector('.subtabs button[data-view="bosses"]').click();
   await wait(60);
   console.log('rate after re-render:', d.querySelector('.run-rate').textContent);
   console.log('row count preserved:', d.querySelector('.row-count').value);
@@ -87,7 +90,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await wait(60);
   console.log('search ratsar boss cards:', d.querySelectorAll('#view .boss-card').length);
 
-  d.querySelector('.tabs button[data-tab="items"]').click();
+  d.querySelector('.subtabs button[data-view="items"]').click();
   d.querySelector('.chip[data-cat="all"]').click();
   s.value = 'wingfish';
   s.dispatchEvent(new w.Event('input'));
@@ -227,7 +230,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     { steam_id: '76561198000000000', display_name: 'SmokeTester', avatar: '', region: 'EU' },
     { steam_id: '76561198000000001', display_name: 'OtherGuy', avatar: '', region: 'NA' },
   ];
-  d.querySelector('.tabs button[data-tab="bosses"]').click();
+  d.querySelector('.tabs button[data-tab="tracker"]').click();
   d.querySelector('.tabs button[data-tab="market"]').click();
   await wait(120);
   console.log('feed cards:', d.querySelectorAll('#view .mkt-listing').length,
@@ -264,7 +267,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('after signout hero:', !!d.querySelector('#view .mkt-hero'),
     '| session cleared:', w.localStorage.getItem('fareverMarket.session.v1') === null);
 
-  d.querySelector('.tabs button[data-tab="bosses"]').click();
+  d.querySelector('.tabs button[data-tab="tracker"]').click();
+  d.querySelector('.subtabs button[data-view="bosses"]').click();
   await wait(60);
   console.log('toolbar restored:', !d.querySelector('.toolbar').classList.contains('mkt'),
     '| boss cards back:', d.querySelectorAll('#view .boss-card').length);
@@ -274,7 +278,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     '| count:', w.FAREVER_ITEMS && w.FAREVER_ITEMS.count,
     '| i18n loaded:', !!(w.FAREVER_I18N && w.FAREVER_I18N.units && Object.keys(w.FAREVER_I18N.units).length));
 
-  d.querySelector('.tabs button[data-tab="database"]').click();
+  d.querySelector('.subtabs button[data-view="database"]').click();
   await wait(200);
   console.log('db toolbar mode:', d.querySelector('.toolbar').classList.contains('db'),
     '| db cards:', d.querySelectorAll('#view .db-card').length,
@@ -298,7 +302,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     [...d.querySelectorAll('#chips .chip')].map((c) => c.textContent).includes('Montarias'),
     '| html lang:', d.documentElement.lang);
 
-  d.querySelector('.tabs button[data-tab="bosses"]').click();
+  d.querySelector('.subtabs button[data-view="bosses"]').click();
   await wait(60);
   const hideBox = d.getElementById('hideOwned');
   hideBox.checked = false;
