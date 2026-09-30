@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Farever Boss Drop Tracker</title>
+<title>Farever Community Center</title>
 <style>
   :root {
     --bg: #100e0c;
@@ -62,7 +62,13 @@
     background: none; border: 0; color: var(--muted); padding: 7px 14px; border-radius: 7px;
     font: inherit; cursor: pointer;
   }
-  .tabs button.active { background: var(--panel-2); color: var(--text); }
+  .tabs button.active { color: #12100c; background: var(--gold); border-color: var(--gold); font-weight: 600; }
+  .subtabs { display: flex; background: #0d0b09; border: 1px solid var(--line); border-radius: 9px; padding: 3px; }
+  .subtabs button {
+    background: none; border: 0; color: var(--muted); padding: 7px 14px; border-radius: 7px;
+    font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .subtabs button.active { color: #12100c; background: var(--gold); border-color: var(--gold); font-weight: 600; }
   .chips { display: flex; gap: 6px; flex-wrap: wrap; }
   .chip {
     background: #0d0b09; border: 1px solid var(--line); color: var(--muted);
@@ -180,7 +186,7 @@
   .legend-note { color: var(--muted); font-size: 12px; margin: -8px 0 14px; }
 
   /* ---- market ---- */
-  .toolbar.mkt .chips, .toolbar.mkt .toggle, .toolbar.mkt #reset { display: none; }
+  .toolbar.mkt .chips, .toolbar.mkt .toggle, .toolbar.mkt #reset, .toolbar.mkt .subtabs { display: none; }
   .mkt-hero {
     background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
     padding: 30px 26px; display: flex; flex-direction: column; align-items: center;
@@ -403,18 +409,21 @@
 <div class="wrap">
   <header class="top">
     <div>
-      <h1>Farever <span>Boss Drop Tracker</span></h1>
+      <h1>Farever <span>Community Center</span></h1>
       <div class="sub" id="subtitle">Mounts · Gliders · Legendaries from world &amp; dungeon bosses</div>
     </div>
     <div class="stats" id="stats"></div>
   </header>
 
   <div class="toolbar">
-    <div class="tabs">
-      <button data-tab="bosses" class="active">By boss</button>
-      <button data-tab="items">Items</button>
-      <button data-tab="database">Database</button>
+    <div class="tabs" id="tabs">
+      <button data-tab="tracker" class="active">Tracker</button>
       <button data-tab="market">Market</button>
+    </div>
+    <div class="subtabs" id="subtabs">
+      <button data-view="bosses" class="active">By boss</button>
+      <button data-view="items">Items</button>
+      <button data-view="database">Database</button>
     </div>
     <div class="chips" id="chips"></div>
     <select class="search db-only" id="db-rarity" title="Rarity"></select>
@@ -445,7 +454,7 @@
   var LANGS = [['en', 'English'], ['pt', 'Português (BR)'], ['es', 'Español']];
   var STR = {
     en: {
-      tabBosses: 'By boss', tabItems: 'Items', tabDb: 'Database', tabMarket: 'Market',
+      tabBosses: 'By boss', tabItems: 'Items', tabDb: 'Database', tabMarket: 'Market', tabTracker: 'Tracker',
       searchItems: 'Search item or boss…', searchDb: 'Search items…', searchMarket: 'Search announcements…',
       hideOwned: 'Hide owned', reset: 'Reset', resetTitle: 'Clear all ticks',
       resetConfirm: 'Clear every owned tick and all try/drop counts?',
@@ -515,7 +524,7 @@
       mktCount: '{n} announcement(s)'
     },
     pt: {
-      tabBosses: 'Por chefe', tabItems: 'Itens', tabDb: 'Banco de dados', tabMarket: 'Mercado',
+      tabBosses: 'Por chefe', tabItems: 'Itens', tabDb: 'Banco de dados', tabMarket: 'Mercado', tabTracker: 'Rastreador',
       searchItems: 'Buscar item ou chefe…', searchDb: 'Buscar itens…', searchMarket: 'Buscar anúncios…',
       hideOwned: 'Ocultar obtidos', reset: 'Redefinir', resetTitle: 'Limpar todas as marcas',
       resetConfirm: 'Limpar todas as marcas de obtidos e todas as contagens de tentativas/drops?',
@@ -585,7 +594,7 @@
       mktCount: '{n} anúncio(s)'
     },
     es: {
-      tabBosses: 'Por jefe', tabItems: 'Objetos', tabDb: 'Base de datos', tabMarket: 'Mercado',
+      tabBosses: 'Por jefe', tabItems: 'Objetos', tabDb: 'Base de datos', tabMarket: 'Mercado', tabTracker: 'Rastreador',
       searchItems: 'Buscar objeto o jefe…', searchDb: 'Buscar objetos…', searchMarket: 'Buscar anuncios…',
       hideOwned: 'Ocultar obtenidos', reset: 'Restablecer', resetTitle: 'Borrar todas las marcas',
       resetConfirm: '¿Borrar todas las marcas y todos los contadores de intentos/drops?',
@@ -676,7 +685,7 @@
     var owned = load();
     var runs = loadRuns();
     var itemRuns = loadItemRuns();
-    var state = { tab: 'bosses', cat: 'all', q: '', hideOwned: false, catDb: 'all', rarDb: 'all' };
+    var state = { tab: 'tracker', view: 'bosses', cat: 'all', q: '', hideOwned: false, catDb: 'all', rarDb: 'all' };
 
     var itemById = {};
     ITEMS_DOC.items.forEach(function (i) { itemById[i.id] = i; });
@@ -763,7 +772,7 @@
 
     function renderChips() {
       var html = '';
-      if (state.tab === 'database') {
+      if (state.tab === 'tracker' && state.view === 'database') {
         html += '<button class="chip' + (state.catDb === 'all' ? ' active' : '') + '" data-cat="all">' + t('all') + '</button>';
         DB_CATS.forEach(function (c) {
           if (!dbCatCounts[c]) return;
@@ -1882,7 +1891,7 @@
     function render() {
       renderStats();
       var isMarket = state.tab === 'market';
-      var isDb = state.tab === 'database';
+      var isDb = !isMarket && state.view === 'database';
       var tb = document.querySelector('.toolbar');
       tb.classList.toggle('mkt', isMarket);
       tb.classList.toggle('db', isDb);
@@ -1893,7 +1902,7 @@
         view.innerHTML = marketHtml();
         return;
       }
-      if (state.tab === 'items') {
+      if (state.view === 'items') {
         var list = visibleItems();
         view.innerHTML = list.length
           ? '<div class="grid">' + list.map(itemCard).join('') + '</div>'
@@ -1983,12 +1992,17 @@
     document.getElementById('view').addEventListener('input', viewInput);
     document.getElementById('view').addEventListener('change', viewInput);
     document.querySelectorAll('.tabs button').forEach(function (b) {
-      var key = { bosses: 'tabBosses', items: 'tabItems', database: 'tabDb', market: 'tabMarket' }[b.getAttribute('data-tab')];
-      if (key) b.textContent = t(key);
       b.addEventListener('click', function () {
         state.tab = b.getAttribute('data-tab');
         document.querySelectorAll('.tabs button').forEach(function (x) { x.classList.toggle('active', x === b); });
         if (state.tab === 'market') marketInit();
+        render();
+      });
+    });
+    document.querySelectorAll('.subtabs button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        state.view = b.getAttribute('data-view');
+        document.querySelectorAll('.subtabs button').forEach(function (x) { x.classList.toggle('active', x === b); });
         renderChips();
         render();
       });
@@ -1997,7 +2011,7 @@
       var c = e.target.closest('.chip');
       if (!c) return;
       var cat = c.getAttribute('data-cat');
-      if (state.tab === 'database') state.catDb = cat;
+      if (state.tab === 'tracker' && state.view === 'database') state.catDb = cat;
       else state.cat = cat;
       document.querySelectorAll('#chips .chip').forEach(function (x) { x.classList.toggle('active', x === c); });
       render();
@@ -2033,8 +2047,14 @@
       document.querySelector('.toggle').lastChild.textContent = ' ' + t('hideOwned');
       document.getElementById('reset').textContent = t('reset');
       document.getElementById('reset').title = t('resetTitle');
+      var topKeys = { tracker: 'tabTracker', market: 'tabMarket' };
       document.querySelectorAll('.tabs button').forEach(function (b) {
-        var key = { bosses: 'tabBosses', items: 'tabItems', database: 'tabDb', market: 'tabMarket' }[b.getAttribute('data-tab')];
+        var key = topKeys[b.getAttribute('data-tab')];
+        if (key) b.textContent = t(key);
+      });
+      var subKeys = { bosses: 'tabBosses', items: 'tabItems', database: 'tabDb' };
+      document.querySelectorAll('.subtabs button').forEach(function (b) {
+        var key = subKeys[b.getAttribute('data-view')];
         if (key) b.textContent = t(key);
       });
       renderChips();
