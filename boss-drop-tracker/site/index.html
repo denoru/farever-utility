@@ -372,10 +372,15 @@
 
   /* ---- language / database ---- */
   .langsel {
-    background: #0d0b09; border: 1px solid var(--line); color: var(--muted);
-    border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 13px; cursor: pointer;
+    display: block; margin: 0 0 10px;
+    background: #2a2110; border: 1px solid var(--gold); color: var(--gold);
+    border-radius: 999px; padding: 7px 16px; font: inherit; font-size: 13px; font-weight: 700;
+    letter-spacing: .05em; cursor: pointer;
+    box-shadow: 0 0 14px rgba(226, 180, 92, .22);
   }
-  .langsel:focus { outline: none; border-color: #6a5a37; }
+  .langsel:hover { background: #352a13; }
+  .langsel option { background: #1a1714; color: var(--text); font-weight: 400; }
+  .langsel:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(226, 180, 92, .4); }
   .toolbar .db-only { display: none; }
   .toolbar.db .db-only { display: block; }
   .thumb.atlas { position: relative; }
@@ -409,6 +414,7 @@
 <div class="wrap">
   <header class="top">
     <div>
+      <select class="langsel" id="lang" title="Language"></select>
       <h1>Farever <span>Community Center</span></h1>
       <div class="sub" id="subtitle">Mounts · Gliders · Legendaries from world &amp; dungeon bosses</div>
     </div>
@@ -430,7 +436,6 @@
     <input class="search" id="search" type="search" placeholder="Search item or boss…">
     <label class="toggle"><input type="checkbox" id="hideOwned"> Hide owned</label>
     <button class="ghost" id="reset" title="Clear all ticks">Reset</button>
-    <select class="langsel" id="lang" title="Language"></select>
   </div>
 
   <div id="view"></div>
