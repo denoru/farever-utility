@@ -147,77 +147,94 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   console.log('signed-in bar:', !!d.querySelector('#view .mkt-me'));
   console.log('region chips:', d.querySelectorAll('#view .mkt-region').length,
     '| label:', (d.querySelector('#view .mkt-region-label') || {}).textContent);
-  const pickCat = d.getElementById('pick-cat');
+  const pickCat = d.getElementById('pick-cat-have');
   const catValues = pickCat ? [...pickCat.options].map((o) => o.value) : [];
   console.log('pick-cat cats:', catValues.join(','));
   console.log('has 4 cats:', ['weapon', 'equipment', 'mount', 'glider'].every((c) => catValues.includes(c)),
     '| no legacy cats:', !['legendary', 'other', 'custom'].some((c) => catValues.includes(c)));
-  console.log('pick-item select:', !!d.getElementById('pick-item'),
-    '| rarity options (all):', d.getElementById('pick-rarity').options.length);
-  console.log('pool empty:', !!d.querySelector('#view .mkt-pool-empty'),
-    '| add btn:', !!d.querySelector('[data-mkt="additem"]'),
+  const bothCols = !!d.querySelector('#view .mkt-col.have') && !!d.querySelector('#view .mkt-col.want');
+  console.log('have+want columns:', bothCols,
+    '| heads:', (d.querySelector('.mkt-col-head.have') || {}).textContent,
+    (d.querySelector('.mkt-col-head.want') || {}).textContent);
+  console.log('pick-item select:', !!d.getElementById('pick-item-have'),
+    '| rarity options (all):', d.getElementById('pick-rarity-have').options.length,
+    '| want cols too:', !!d.getElementById('pick-item-want') && !!d.getElementById('pick-rarity-want'));
+  console.log('pool empty:', !!d.querySelector('#view .mkt-col.have .mkt-pool-empty'),
+    '| add btns:', d.querySelectorAll('[data-mkt="additem"]').length,
     '| post btn:', !!d.querySelector('[data-mkt="post"]'));
   console.log('empty feed text:', (d.querySelector('#view .empty') || {}).textContent);
 
-  d.querySelector('[data-mkt="additem"]').click();
+  d.querySelector('[data-mkt="additem"][data-kind="have"]').click();
   await wait(40);
   const errEl = d.querySelector('#view .mkt-error');
   console.log('add with empty pool error:', errEl ? errEl.textContent.trim() : 'NO ERROR BOX',
     '| jsdom errors:', errors);
 
-  const pickItem = d.getElementById('pick-item');
+  const pickItem = d.getElementById('pick-item-have');
   pickItem.value = pickItem.options[1].value;
   pickItem.dispatchEvent(new w.Event('input', { bubbles: true }));
-  const rarAuto = d.getElementById('pick-rarity').value;
-  d.querySelector('[data-mkt="additem"]').click();
+  const rarAuto = d.getElementById('pick-rarity-have').value;
+  d.querySelector('[data-mkt="additem"][data-kind="have"]').click();
   await wait(40);
-  const trow = d.querySelector('#view .mkt-pool-row');
+  const trow = d.querySelector('#view .mkt-col.have .mkt-pool-row');
   console.log('tracker pool row:', trow && trow.querySelector('.mkt-pool-name').textContent,
     '| thumb:', !!(trow && trow.querySelector('.dthumb img')),
     '| kind:', trow && trow.querySelector('.badge').textContent,
-    '| rarity auto-filled:', rarAuto);
-  d.querySelector('#view .mkt-pool-x').click();
+    '| rarity auto-filled:', rarAuto,
+    '| want still empty:', !!d.querySelector('#view .mkt-col.want .mkt-pool-empty'));
+  d.querySelector('#view .mkt-col.have .mkt-pool-x').click();
   await wait(40);
-  console.log('pool empty after tracker remove:', !!d.querySelector('#view .mkt-pool-empty'));
+  console.log('pool empty after tracker remove:', !!d.querySelector('#view .mkt-col.have .mkt-pool-empty'));
 
-  let pc = d.getElementById('pick-cat');
+  let pc = d.getElementById('pick-cat-have');
   pc.value = 'mount';
   pc.dispatchEvent(new w.Event('input', { bubbles: true }));
   await wait(40);
-  let rr = d.getElementById('pick-rarity');
+  let rr = d.getElementById('pick-rarity-have');
   console.log('mount rarity locked:', rr.options.length === 1 && rr.value === 'Epic',
     '| opts:', [...rr.options].map((o) => o.value).join(','));
-  pc = d.getElementById('pick-cat');
+  pc = d.getElementById('pick-cat-have');
   pc.value = 'weapon';
   pc.dispatchEvent(new w.Event('input', { bubbles: true }));
   await wait(40);
-  rr = d.getElementById('pick-rarity');
+  rr = d.getElementById('pick-rarity-have');
   console.log('weapon rarity full ladder:', rr.options.length === 6 && rr.value === 'auto',
     '| last:', rr.options[rr.options.length - 1].value);
 
-  pc = d.getElementById('pick-cat');
+  pc = d.getElementById('pick-cat-have');
   pc.value = 'equipment';
   pc.dispatchEvent(new w.Event('input', { bubbles: true }));
   await wait(40);
-  rr = d.getElementById('pick-rarity');
+  rr = d.getElementById('pick-rarity-have');
   console.log('equipment rarity capped:', [...rr.options].map((o) => o.value).join(',') === ',Common,Uncommon,Rare',
-    '| text input shown:', !!d.getElementById('pick-custom'));
-  const custom = d.getElementById('pick-custom');
+    '| text input shown:', !!d.getElementById('pick-custom-have'));
+  const custom = d.getElementById('pick-custom-have');
   custom.value = 'Test Sword of Smoke';
   custom.dispatchEvent(new w.Event('input', { bubbles: true }));
-  d.querySelector('[data-mkt="additem"]').click();
+  d.querySelector('[data-mkt="additem"][data-kind="have"]').click();
   await wait(40);
-  const poolRow = d.querySelector('#view .mkt-pool-row');
-  console.log('pool rows:', d.querySelectorAll('#view .mkt-pool-row').length,
+  const poolRow = d.querySelector('#view .mkt-col.have .mkt-pool-row');
+  console.log('pool rows:', d.querySelectorAll('#view .mkt-col.have .mkt-pool-row').length,
     '| name:', poolRow && poolRow.querySelector('.mkt-pool-name').textContent);
-  d.querySelector('#view .mkt-pool-x').click();
+  d.querySelector('#view .mkt-col.have .mkt-pool-x').click();
   await wait(40);
-  console.log('after remove, empty again:', !!d.querySelector('#view .mkt-pool-empty'));
+  console.log('after remove, empty again:', !!d.querySelector('#view .mkt-col.have .mkt-pool-empty'));
 
-  d.querySelector('[data-mkt="pickkind"][data-val="want"]').click();
+  const wpc = d.getElementById('pick-cat-want');
+  wpc.value = 'weapon';
+  wpc.dispatchEvent(new w.Event('input', { bubbles: true }));
   await wait(40);
-  console.log('want chip active:',
-    d.querySelector('[data-mkt="pickkind"][data-val="want"]').classList.contains('active'));
+  const wpi = d.getElementById('pick-item-want');
+  wpi.value = wpi.options[1].value;
+  wpi.dispatchEvent(new w.Event('input', { bubbles: true }));
+  d.querySelector('[data-mkt="additem"][data-kind="want"]').click();
+  await wait(40);
+  const wrow = d.querySelector('#view .mkt-col.want .mkt-pool-row');
+  console.log('want column row:', wrow && wrow.querySelector('.mkt-pool-name').textContent,
+    '| kind:', wrow && wrow.querySelector('.badge').textContent,
+    '| have empty:', !!d.querySelector('#view .mkt-col.have .mkt-pool-empty'));
+  d.querySelector('#view .mkt-col.want .mkt-pool-x').click();
+  await wait(40);
 
   w.__fareverMarket.announcements = [
     { id: 'a1', steam_id: '76561198000000000', note: 'fast deal', status: 'active',
@@ -235,6 +252,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     { steam_id: '76561198000000000', display_name: 'SmokeTester', avatar: '', region: 'EU' },
     { steam_id: '76561198000000001', display_name: 'OtherGuy', avatar: '', region: 'NA' },
   ];
+  w.__fareverMarket.feedback = [
+    { from_steam_id: '76561198000000001', to_steam_id: '76561198000000000', rating: 1 },
+  ];
   d.querySelector('.tabs button[data-tab="tracker"]').click();
   d.querySelector('.tabs button[data-tab="market"]').click();
   await wait(120);
@@ -245,6 +265,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     '| region:', card.querySelector('.mkt-region-badge').getAttribute('data-r'),
     '| item rows:', card.querySelectorAll('.mkt-item-row').length,
     '| own actions:', card.querySelector('[data-mkt="done"]') ? 'Mark done' : 'MISSING');
+  const repBtn = card.querySelector('.mkt-rep');
+  console.log('rep star badge:', repBtn && repBtn.textContent.trim(),
+    '| has 4-pt star:', !!(repBtn && /✦/.test(repBtn.textContent)),
+    '| cls:', repBtn && repBtn.className,
+    '| star span:', !!(repBtn && repBtn.querySelector('.mkt-star')));
   console.log('region chip now:',
     (d.querySelector('.mkt-region.active') || {}).getAttribute &&
     d.querySelector('.mkt-region.active').getAttribute('data-val'),

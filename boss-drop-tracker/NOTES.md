@@ -147,25 +147,28 @@ contact each other on Steam. Copy must stay announcement-flavored ("announcement
   (user chose only trade feedback ±1).
 - **UI:** third tab `Market` — hero + "Sign in with Steam" when signed out,
   feed always visible (public read). Compose panel (v2): region chips
-  NA/SA/EU/AS/CN (required before posting, PATCHes `profiles.region`), item
-  picker row (I have/I want chips, category select **All/Weapons/Equipment/
+  NA/SA/EU/AS/CN (required before posting, PATCHes `profiles.region`), the
+  **two-column compose** (Have/Want side by side as colored panels `.mkt-col`,
+  each with its own picker row: category select **All/Weapons/Equipment/
   Mounts/Gliders** — no Legendary/Custom/Other categories; item select with
   optgroups for tracker categories, free-text name input for Equipment since
   the tracker has no armor/necklace/ring drops; rarity select capped per game
   rules: Mounts/Gliders locked to Epic, Equipment limited to Common..Rare,
-  Weapons (and All) offer the full ladder with auto-filled tracker rarity), the **pool list** (1..20 items per
+  Weapons (and All) offer the full ladder with auto-filled tracker rarity),
+  then a **shared pool** (1..20 items per
   announcement, remove per row), note, "Post announcement". Announcement cards
   show every item row (kind badge + icon + name + rarity), have/want counts,
   poster's region badge, filters (All/Have/Want = contains an item of that
   kind, Show closed), per-announcement "Contact on Steam"; own posts get
-  Mark done/Relist/Delete; rep badge opens profile modal with feedback list +
+  Mark done/Relist/Delete; rep badge = 4-point star ✦ (filled when rep > 0,
+  hollow ✧ otherwise) + number, opens profile modal with feedback list +
   ±1 form (upsert on `on_conflict=from,to`). Toolbar switches to `.mkt` mode:
   chips/hide-owned/reset hidden, main search reused for announcements
   (`Search announcements…`, matches item names/note/seller).
 - Integration points in `index.html`: `render()` market branch, view
   click listener routes to `marketClick`, shared `viewInput` on `input`+`change`
-  events (market compose branch: `mkt-note`/`pick-cat`/`pick-item`/`pick-rarity`/
-  `pick-custom`), tab click calls `marketInit()`, boot ends with
+  events (market compose branch matches `pick-(cat|item|custom|rarity)-(have|want)`
+  per column), tab click calls `marketInit()`, boot ends with
   `handleOpenIdReturn()`. `window.__fareverMarket` is a debug hook used by
   smoke.js to inject synthetic feeds.
 
@@ -178,10 +181,11 @@ contact each other on Steam. Copy must stay announcement-flavored ("announcement
   Function "Verify JWTs" ON or OFF both work (site always sends the anon key).
 - smoke.js covers the market tab in its *signed-out* state, then injects a fake
   session (`fareverMarket.session.v1`) to exercise the compose panel (region
-  chips, category-capped pool add+remove with rarity-rule assertions, want
-  toggle) and a synthetic feed via
+  chips, two Have/Want columns with category-capped pool add+remove and
+  rarity-rule assertions per column) and a synthetic feed via
   `window.__fareverMarket` to exercise announcement cards, region badges,
-  closed filter and have/want/search filtering — all offline (jsdom has no
+  rep star badge, closed filter and have/want/search filtering — all offline
+  (jsdom has no
   usable `fetch`; failed loads only set the error box).
 - Feedback limit of one row per pair caps farming at +1 per distinct counterparty.
 
