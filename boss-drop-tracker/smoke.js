@@ -4,7 +4,7 @@ const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
 const ROOT = process.argv[2] ? require('path').resolve(process.argv[2]) : __dirname;
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml' };
 
 const server = http.createServer((req, res) => {
   const file = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
@@ -43,6 +43,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     '| old notes gone:', !/rarityRules|no boss drops a Legendary/.test(foot.textContent));
   console.log('default tab boss cards:', d.querySelectorAll('#view .boss-card').length);
   console.log('site title:', d.title, '| h1:', d.querySelector('h1').textContent.replace(/\s+/g, ' ').trim());
+  const banner = d.querySelector('.minibanner');
+  console.log('minibanner:', !!banner, '| src:', banner && banner.getAttribute('src'),
+    '| under title:', !!(banner && d.querySelector('h1').compareDocumentPosition(banner) & 4));
   console.log('top tabs:', [...d.querySelectorAll('.tabs button')].map((b) => b.textContent).join(','),
     '| subtabs:', [...d.querySelectorAll('.subtabs button')].map((b) => b.textContent).join(','),
     '| active tab:', d.querySelector('.tabs button.active').textContent);

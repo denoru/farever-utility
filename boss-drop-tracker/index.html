@@ -36,6 +36,11 @@
   h1 { font-size: 26px; margin: 0; letter-spacing: .5px; }
   h1 span { color: var(--gold); }
   .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .minibanner {
+    display: block; width: 100%; max-width: 575px; height: auto;
+    margin-top: 12px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--panel);
+  }
 
   .stats { display: flex; gap: 10px; flex-wrap: wrap; }
   .stat {
@@ -416,7 +421,8 @@
     <div>
       <select class="langsel" id="lang" title="Language"></select>
       <h1>Farever <span>Community Center</span></h1>
-      <div class="sub" id="subtitle">Mounts · Gliders · Legendaries from world &amp; dungeon bosses</div>
+      <div class="sub" id="subtitle">Mounts &middot; Gliders &middot; Legendaries from world &amp; dungeon bosses</div>
+      <img class="minibanner" src="MiniBanner.svg" alt="Farever Community Center">
     </div>
     <div class="stats" id="stats"></div>
   </header>
